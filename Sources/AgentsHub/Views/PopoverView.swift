@@ -86,6 +86,7 @@ struct PopoverView: View {
     }
 
     private func jumpToWindow(session: Session) {
-        // Window jumping will be implemented in Task 9
+        let jumper = WindowJumper()
+        _ = jumper.jumpTo(session: session)
     }
 }
