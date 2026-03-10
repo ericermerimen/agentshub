@@ -45,7 +45,7 @@ jobs:
 
             **One-line install (recommended):**
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentshub/main/Scripts/install-remote.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentping/main/Scripts/install-remote.sh | bash
             ```
 
             **Homebrew:**
@@ -71,7 +71,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           SHA="${{ steps.sha.outputs.app_sha }}"
-          URL="https://github.com/ericermerimen/agentshub/releases/download/${VERSION}/AgentPing-${VERSION}-macos.tar.gz"
+          URL="https://github.com/ericermerimen/agentping/releases/download/${VERSION}/AgentPing-${VERSION}-macos.tar.gz"
 
           # Clone the tap repo
           git clone "https://x-access-token:${TAP_TOKEN}@github.com/ericermerimen/homebrew-tap.git" /tmp/homebrew-tap
@@ -83,7 +83,7 @@ jobs:
           cat > Formula/agentping.rb << FORMULA
           class Agentping < Formula
             desc "macOS menu bar app for monitoring Claude Code sessions"
-            homepage "https://github.com/ericermerimen/agentshub"
+            homepage "https://github.com/ericermerimen/agentping"
             url "${URL}"
             sha256 "${SHA}"
 

@@ -38,13 +38,13 @@ open $(brew --prefix)/AgentPing.app
 Downloads the pre-built `.app` from GitHub Releases. No Xcode required:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentshub/main/Scripts/install-remote.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentping/main/Scripts/install-remote.sh | bash
 open /Applications/AgentPing.app
 ```
 
 ### Manual download
 
-1. Go to [Releases](https://github.com/ericermerimen/agentshub/releases/latest)
+1. Go to [Releases](https://github.com/ericermerimen/agentping/releases/latest)
 2. Download `AgentPing-vX.X.X-macos.tar.gz`
 3. Extract and install:
 
@@ -59,8 +59,8 @@ ln -sf /Applications/AgentPing.app/Contents/MacOS/agentping /usr/local/bin/agent
 For contributors and developers. Requires Xcode 15+ or Swift 5.9+.
 
 ```bash
-git clone https://github.com/ericermerimen/agentshub.git
-cd agentshub
+git clone https://github.com/ericermerimen/agentping.git
+cd agentping
 ./Scripts/install.sh
 ```
 
