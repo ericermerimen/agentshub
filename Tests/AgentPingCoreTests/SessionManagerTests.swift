@@ -1,5 +1,5 @@
 import XCTest
-@testable import AgentsHubCore
+@testable import AgentPingCore
 
 final class SessionManagerTests: XCTestCase {
     var manager: SessionManager!
@@ -8,7 +8,7 @@ final class SessionManagerTests: XCTestCase {
 
     override func setUp() {
         tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("agentshub-mgr-\(UUID().uuidString)")
+            .appendingPathComponent("agentping-mgr-\(UUID().uuidString)")
         store = SessionStore(directory: tempDir)
         manager = SessionManager(store: store)
     }

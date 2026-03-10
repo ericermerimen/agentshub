@@ -59,9 +59,9 @@ struct PreferencesView: View {
         let config = """
         {
           "hooks": {
-            "PostToolUse": [{"command": "bash -c 'agentshub report --session $(jq -r .session_id) --event tool-use'"}],
-            "Stop": [{"command": "bash -c 'agentshub report --session $(jq -r .session_id) --event stopped'"}],
-            "Notification": [{"command": "bash -c 'agentshub report --session $(jq -r .session_id) --event needs-input'"}]
+            "PostToolUse": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event tool-use'"}],
+            "Stop": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event stopped'"}],
+            "Notification": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event needs-input'"}]
           }
         }
         """

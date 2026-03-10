@@ -1,5 +1,5 @@
 import SwiftUI
-import AgentsHubCore
+import AgentPingCore
 
 struct SessionRowView: View {
     let session: Session

@@ -1,5 +1,5 @@
 import SwiftUI
-import AgentsHubCore
+import AgentPingCore
 
 enum SessionTab: String, CaseIterable {
     case active = "Active"
@@ -45,7 +45,7 @@ struct PopoverView: View {
 
     private var header: some View {
         HStack(alignment: .center) {
-            Text("AgentsHub")
+            Text("AgentPing")
                 .font(.system(size: 13, weight: .semibold))
 
             Spacer()

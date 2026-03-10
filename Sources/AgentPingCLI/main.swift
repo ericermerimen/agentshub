@@ -1,11 +1,11 @@
 import Foundation
 import ArgumentParser
-import AgentsHubCore
+import AgentPingCore
 
-struct AgentsHubCommand: ParsableCommand {
+struct AgentPingCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "agentshub",
-        abstract: "AgentsHub CLI - manage Claude Code sessions",
+        commandName: "agentping",
+        abstract: "AgentPing CLI - manage Claude Code sessions",
         subcommands: [Report.self, List.self, Status.self, Clear.self, Delete.self]
     )
 }
@@ -86,7 +86,7 @@ struct List: ParsableCommand {
         let sessions = try store.listAll()
 
         if json {
-            let data = try JSONEncoder.agentsHub.encode(sessions)
+            let data = try JSONEncoder.agentPing.encode(sessions)
             print(String(data: data, encoding: .utf8) ?? "[]")
         } else {
             for s in sessions {
@@ -148,4 +148,4 @@ struct Delete: ParsableCommand {
     }
 }
 
-AgentsHubCommand.main()
+AgentPingCommand.main()

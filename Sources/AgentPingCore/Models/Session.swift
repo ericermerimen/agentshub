@@ -94,7 +94,7 @@ extension Session {
 }
 
 extension JSONDecoder {
-    public static let agentsHub: JSONDecoder = {
+    public static let agentPing: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return decoder
@@ -102,7 +102,7 @@ extension JSONDecoder {
 }
 
 extension JSONEncoder {
-    public static let agentsHub: JSONEncoder = {
+    public static let agentPing: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

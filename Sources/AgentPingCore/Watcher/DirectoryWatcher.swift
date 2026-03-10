@@ -6,7 +6,7 @@ public final class DirectoryWatcher {
     private let onChange: () -> Void
 
     public init(path: String? = nil, onChange: @escaping () -> Void) {
-        self.path = path ?? NSHomeDirectory() + "/.agentshub/sessions"
+        self.path = path ?? NSHomeDirectory() + "/.agentping/sessions"
         self.onChange = onChange
     }
 

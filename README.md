@@ -1,4 +1,4 @@
-# AgentsHub
+# AgentPing
 
 A macOS menu bar app that monitors your Claude Code sessions, shows their status, and lets you jump to the correct window with one click.
 
@@ -16,7 +16,7 @@ A macOS menu bar app that monitors your Claude Code sessions, shows their status
 - **Session grouping** -- sessions grouped by project directory
 - **Auto-purge** -- finished sessions older than 24h are cleaned up automatically
 - **Search** -- filter sessions by name, project, or task
-- **CLI tool** (`agentshub`) for scripting and Claude Code hook integration
+- **CLI tool** (`agentping`) for scripting and Claude Code hook integration
 - **FSEvents watcher** -- updates instantly when session state changes
 - **Preferences** -- launch at login, scan interval, notification controls
 
@@ -29,8 +29,8 @@ A macOS menu bar app that monitors your Claude Code sessions, shows their status
 ### Homebrew (recommended)
 
 ```bash
-brew install ericermerimen/tap/agentshub
-open $(brew --prefix)/AgentsHub.app
+brew install ericermerimen/tap/agentping
+open $(brew --prefix)/AgentPing.app
 ```
 
 ### One-line install
@@ -39,19 +39,19 @@ Downloads the pre-built `.app` from GitHub Releases. No Xcode required:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentshub/main/Scripts/install-remote.sh | bash
-open /Applications/AgentsHub.app
+open /Applications/AgentPing.app
 ```
 
 ### Manual download
 
 1. Go to [Releases](https://github.com/ericermerimen/agentshub/releases/latest)
-2. Download `AgentsHub-vX.X.X-macos.tar.gz`
+2. Download `AgentPing-vX.X.X-macos.tar.gz`
 3. Extract and install:
 
 ```bash
-tar xzf AgentsHub-*.tar.gz
-cp -r AgentsHub.app /Applications/
-ln -sf /Applications/AgentsHub.app/Contents/MacOS/agentshub /usr/local/bin/agentshub
+tar xzf AgentPing-*.tar.gz
+cp -r AgentPing.app /Applications/
+ln -sf /Applications/AgentPing.app/Contents/MacOS/agentping /usr/local/bin/agentping
 ```
 
 ### Build from source
@@ -66,42 +66,42 @@ cd agentshub
 
 ## CLI Usage
 
-The `agentshub` CLI is bundled inside the `.app` (no separate install needed if you symlinked it).
+The `agentping` CLI is bundled inside the `.app` (no separate install needed if you symlinked it).
 
 ```bash
 # List all sessions
-agentshub list
-agentshub list --json
+agentping list
+agentping list --json
 
 # One-line status summary
-agentshub status
+agentping status
 
 # Report an event (used by hooks)
-agentshub report --session SESSION_ID --event tool-use --name "My Task"
+agentping report --session SESSION_ID --event tool-use --name "My Task"
 
 # Clear finished sessions from history
-agentshub clear --all
-agentshub clear --older-than 12  # hours
+agentping clear --all
+agentping clear --older-than 12  # hours
 
 # Delete a specific session
-agentshub delete SESSION_ID
+agentping delete SESSION_ID
 ```
 
 ## Claude Code Hook Setup
 
-AgentsHub works best with Claude Code hooks. Open the app preferences and click **"Copy Hook Config to Clipboard"**, then paste into `~/.claude/settings.json`:
+AgentPing works best with Claude Code hooks. Open the app preferences and click **"Copy Hook Config to Clipboard"**, then paste into `~/.claude/settings.json`:
 
 ```json
 {
   "hooks": {
     "PostToolUse": [
-      { "command": "agentshub report --session $CLAUDE_SESSION_ID --event tool-use" }
+      { "command": "agentping report --session $CLAUDE_SESSION_ID --event tool-use" }
     ],
     "Stop": [
-      { "command": "agentshub report --session $CLAUDE_SESSION_ID --event stopped" }
+      { "command": "agentping report --session $CLAUDE_SESSION_ID --event stopped" }
     ],
     "Notification": [
-      { "command": "agentshub report --session $CLAUDE_SESSION_ID --event needs-input" }
+      { "command": "agentping report --session $CLAUDE_SESSION_ID --event needs-input" }
     ]
   }
 }
@@ -109,25 +109,25 @@ AgentsHub works best with Claude Code hooks. Open the app preferences and click 
 
 ## Keyboard Shortcut
 
-Press `Ctrl+Option+A` from anywhere to toggle the AgentsHub popover. No need to click the menu bar icon.
+Press `Ctrl+Option+A` from anywhere to toggle the AgentPing popover. No need to click the menu bar icon.
 
 ## Accessibility Permission
 
-AgentsHub uses the macOS Accessibility API to focus terminal windows when you click a session. On first launch, macOS will prompt you to grant Accessibility access in **System Settings > Privacy & Security > Accessibility**.
+AgentPing uses the macOS Accessibility API to focus terminal windows when you click a session. On first launch, macOS will prompt you to grant Accessibility access in **System Settings > Privacy & Security > Accessibility**.
 
 ## Uninstall
 
 **Homebrew:**
 ```bash
-brew services stop agentshub
-brew uninstall agentshub
+brew services stop agentping
+brew uninstall agentping
 ```
 
 **Manual:**
 ```bash
-rm -rf /Applications/AgentsHub.app
-rm -f /usr/local/bin/agentshub
-rm -rf ~/.agentshub
+rm -rf /Applications/AgentPing.app
+rm -f /usr/local/bin/agentping
+rm -rf ~/.agentping
 ```
 
 ## Creating a Release
@@ -147,7 +147,7 @@ To enable automatic Homebrew tap updates, add a `TAP_TOKEN` secret to your repo 
 
 ```
 Sources/
-├── AgentsHub/           # macOS menu bar app (SwiftUI + AppKit)
+├── AgentPing/           # macOS menu bar app (SwiftUI + AppKit)
 │   ├── AgentsHubApp.swift
 │   ├── Views/
 │   │   ├── PopoverView.swift
@@ -157,9 +157,9 @@ Sources/
 │   │   └── NotificationManager.swift
 │   ├── Assets/
 │   └── Info.plist
-├── AgentsHubCLI/        # CLI tool (ArgumentParser)
+├── AgentPingCLI/        # CLI tool (ArgumentParser)
 │   └── main.swift
-└── AgentsHubCore/       # Shared library
+└── AgentPingCore/       # Shared library
     ├── Models/Session.swift
     ├── Store/SessionStore.swift
     ├── Manager/SessionManager.swift
@@ -171,7 +171,7 @@ Sources/
 
 ## Data Storage
 
-Session files are stored as JSON in `~/.agentshub/sessions/`. Each session gets its own file (`<session-id>.json`). The directory is created with owner-only permissions (0700).
+Session files are stored as JSON in `~/.agentping/sessions/`. Each session gets its own file (`<session-id>.json`). The directory is created with owner-only permissions (0700).
 
 ## License
 

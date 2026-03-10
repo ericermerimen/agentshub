@@ -1,5 +1,5 @@
 import XCTest
-@testable import AgentsHubCore
+@testable import AgentPingCore
 
 final class ProcessScannerTests: XCTestCase {
     func testParseProcessInfo() {
