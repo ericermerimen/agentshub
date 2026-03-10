@@ -30,6 +30,60 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().add(request)
     }
 
+    func sendError(session: Session) {
+        guard session.notifications else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Agent hit an error"
+        content.body = "\(session.name ?? "Session") in \(session.app?.uppercased() ?? "unknown") encountered an error"
+        content.sound = .default
+        content.userInfo = ["sessionId": session.id]
+
+        let request = UNNotificationRequest(
+            identifier: "error-\(session.id)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    func sendContextWarning(session: Session, percent: Double) {
+        guard session.notifications else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Context window \(Int(percent * 100))%"
+        content.body = "\(session.name ?? "Session") is running low on context. Consider starting a new session."
+        content.sound = .default
+        content.userInfo = ["sessionId": session.id]
+
+        let request = UNNotificationRequest(
+            identifier: "context-warning-\(session.id)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
+    func sendDone(session: Session) {
+        guard session.notifications else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Agent finished"
+        content.body = "\(session.name ?? "Session") in \(session.app?.uppercased() ?? "unknown") completed its task"
+        content.sound = .default
+        content.userInfo = ["sessionId": session.id]
+
+        let request = UNNotificationRequest(
+            identifier: "done-\(session.id)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,

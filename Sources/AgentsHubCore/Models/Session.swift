@@ -22,6 +22,10 @@ public struct Session: Codable, Identifiable, Equatable {
     public var lastEventAt: Date
     public var notifications: Bool
     public var costUsd: Double?
+    public var transcriptPath: String?
+    public var taskDescription: String?
+    public var contextPercent: Double?
+    public var pinned: Bool
 
     public init(
         id: String,
@@ -35,7 +39,11 @@ public struct Session: Codable, Identifiable, Equatable {
         startedAt: Date = Date(),
         lastEventAt: Date = Date(),
         notifications: Bool = true,
-        costUsd: Double? = nil
+        costUsd: Double? = nil,
+        transcriptPath: String? = nil,
+        taskDescription: String? = nil,
+        contextPercent: Double? = nil,
+        pinned: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -49,6 +57,39 @@ public struct Session: Codable, Identifiable, Equatable {
         self.lastEventAt = lastEventAt
         self.notifications = notifications
         self.costUsd = costUsd
+        self.transcriptPath = transcriptPath
+        self.taskDescription = taskDescription
+        self.contextPercent = contextPercent
+        self.pinned = pinned
+    }
+}
+
+// Custom decoding to handle backward compatibility (pinned may not exist in old JSON)
+extension Session {
+    enum CodingKeys: String, CodingKey {
+        case id, name, status, app, pid, windowId, cwd, file
+        case startedAt, lastEventAt, notifications, costUsd
+        case transcriptPath, taskDescription, contextPercent, pinned
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decodeIfPresent(String.self, forKey: .name)
+        status = try container.decode(SessionStatus.self, forKey: .status)
+        app = try container.decodeIfPresent(String.self, forKey: .app)
+        pid = try container.decodeIfPresent(Int.self, forKey: .pid)
+        windowId = try container.decodeIfPresent(Int.self, forKey: .windowId)
+        cwd = try container.decodeIfPresent(String.self, forKey: .cwd)
+        file = try container.decodeIfPresent(String.self, forKey: .file)
+        startedAt = try container.decode(Date.self, forKey: .startedAt)
+        lastEventAt = try container.decode(Date.self, forKey: .lastEventAt)
+        notifications = try container.decode(Bool.self, forKey: .notifications)
+        costUsd = try container.decodeIfPresent(Double.self, forKey: .costUsd)
+        transcriptPath = try container.decodeIfPresent(String.self, forKey: .transcriptPath)
+        taskDescription = try container.decodeIfPresent(String.self, forKey: .taskDescription)
+        contextPercent = try container.decodeIfPresent(Double.self, forKey: .contextPercent)
+        pinned = try container.decodeIfPresent(Bool.self, forKey: .pinned) ?? false
     }
 }
 

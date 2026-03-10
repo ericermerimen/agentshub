@@ -1,31 +1,38 @@
+import AppKit
 import SwiftUI
+import Carbon.HIToolbox
 import AgentsHubCore
 import Combine
 
-@main
-struct AgentsHubApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-
-    var body: some Scene {
-        Settings {
-            PreferencesView()
-        }
-    }
-}
-
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    var controller: StatusItemController?
     let manager = SessionManager()
+    var statusItem: NSStatusItem!
+    var popover: NSPopover!
+    var preferencesWindow: NSWindow?
     var watcher: DirectoryWatcher?
     var scanTimer: Timer?
     var cancellables = Set<AnyCancellable>()
+    var hotKeyRef: EventHotKeyRef?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Hide dock icon
-        NSApplication.shared.setActivationPolicy(.accessory)
+        // Create status bar item
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
-        // Set up menu bar controller
-        controller = StatusItemController(manager: manager)
+        if let button = statusItem.button {
+            button.image = NSImage(systemSymbolName: "circle.grid.2x2", accessibilityDescription: "AgentsHub")
+            button.action = #selector(togglePopover)
+            button.target = self
+        }
+
+        // Create popover
+        popover = NSPopover()
+        popover.contentSize = NSSize(width: 340, height: 460)
+        popover.behavior = .transient
+        popover.contentViewController = NSHostingController(
+            rootView: PopoverView(manager: manager, openPreferences: { [weak self] in
+                self?.openPreferences()
+            })
+        )
 
         // Set up directory watcher for live updates
         watcher = DirectoryWatcher { [weak self] in
@@ -44,6 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         manager.$sessions
             .receive(on: DispatchQueue.main)
             .sink { [weak self] sessions in
+                self?.updateIcon(sessions: sessions)
                 self?.checkForNeedsInput(sessions: sessions)
             }
             .store(in: &cancellables)
@@ -51,11 +59,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Initial load
         manager.reload()
 
+        // Auto-purge old finished sessions on launch
+        manager.autoPurgeOldSessions()
+
+        // Register global hotkey: Cmd+Shift+A
+        registerGlobalHotKey()
+
         // Start periodic scan
         startPeriodicScan()
     }
 
+    private func updateIcon(sessions: [Session]) {
+        guard let button = statusItem.button else { return }
+        let attentionCount = sessions.filter { $0.status == .needsInput || $0.status == .idle }.count
+        let symbolName = attentionCount > 0 ? "circle.grid.2x2.fill" : "circle.grid.2x2"
+        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "AgentsHub")
+        button.title = attentionCount > 0 ? " \(attentionCount)" : ""
+    }
+
     private var previousNeedsInputIds = Set<String>()
+    private var previousErrorIds = Set<String>()
+    private var previousRunningIds = Set<String>()
+    private var contextWarningIds = Set<String>()
 
     private func checkForNeedsInput(sessions: [Session]) {
         let currentNeedsInput = Set(sessions.filter { $0.status == .needsInput }.map(\.id))
@@ -68,6 +93,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         previousNeedsInputIds = currentNeedsInput
+
+        // Also notify on new errors
+        let currentErrors = Set(sessions.filter { $0.status == .error }.map(\.id))
+        let newErrors = currentErrors.subtracting(previousErrorIds)
+
+        for sessionId in newErrors {
+            if let session = sessions.first(where: { $0.id == sessionId }) {
+                NotificationManager.shared.sendError(session: session)
+            }
+        }
+
+        previousErrorIds = currentErrors
+
+        // Notify when a previously running session completes
+        let currentDone = Set(sessions.filter { $0.status == .done }.map(\.id))
+        let newlyDone = currentDone.intersection(previousRunningIds)
+
+        for sessionId in newlyDone {
+            if let session = sessions.first(where: { $0.id == sessionId }) {
+                NotificationManager.shared.sendDone(session: session)
+            }
+        }
+
+        previousRunningIds = Set(sessions.filter { $0.status == .running }.map(\.id))
+
+        // Context window warning at 80%+
+        for session in sessions where session.status == .running {
+            if let pct = session.contextPercent, pct >= 0.80, !contextWarningIds.contains(session.id) {
+                contextWarningIds.insert(session.id)
+                NotificationManager.shared.sendContextWarning(session: session, percent: pct)
+            }
+        }
     }
 
     private func startPeriodicScan() {
@@ -77,5 +134,85 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         scanTimer = Timer.scheduledTimer(withTimeInterval: scanInterval, repeats: true) { [weak self] _ in
             self?.manager.reload()
         }
+    }
+
+    private func openPreferences() {
+        popover.performClose(nil)
+
+        if let existing = preferencesWindow, existing.isVisible {
+            existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 360),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Preferences"
+        window.contentViewController = NSHostingController(rootView: PreferencesView())
+        window.center()
+        window.isReleasedWhenClosed = false
+        preferencesWindow = window
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc func togglePopover() {
+        if popover.isShown {
+            popover.performClose(nil)
+        } else if let button = statusItem.button {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        }
+    }
+
+    // MARK: - Global Hotkey (Ctrl+Option+A)
+
+    private func registerGlobalHotKey() {
+        let hotKeyID = EventHotKeyID(signature: OSType(0x41_48_55_42), id: 1) // "AHUB"
+        // kVK_ANSI_A = 0x00, controlKey + optionKey
+        var ref: EventHotKeyRef?
+        let status = RegisterEventHotKey(
+            UInt32(kVK_ANSI_A),
+            UInt32(controlKey | optionKey),
+            hotKeyID,
+            GetApplicationEventTarget(),
+            0,
+            &ref
+        )
+        if status == noErr {
+            hotKeyRef = ref
+        }
+
+        // Install Carbon event handler for the hotkey
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        InstallEventHandler(GetApplicationEventTarget(), { _, event, _ -> OSStatus in
+            guard let event else { return OSStatus(eventNotHandledErr) }
+            var hotKeyID = EventHotKeyID()
+            GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                              nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
+            if hotKeyID.id == 1 {
+                DispatchQueue.main.async {
+                    // Find the app delegate and toggle
+                    if let delegate = NSApp.delegate as? AppDelegate {
+                        delegate.togglePopover()
+                    }
+                }
+            }
+            return noErr
+        }, 1, &eventType, nil, nil)
+    }
+}
+
+@main
+enum EntryPoint {
+    static func main() {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.accessory)
+        let delegate = AppDelegate()
+        app.delegate = delegate
+        app.run()
     }
 }

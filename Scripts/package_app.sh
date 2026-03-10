@@ -81,17 +81,18 @@ fi
 # Copy Info.plist
 cp "$PROJECT_DIR/Sources/AgentsHub/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
 
+# Copy app icon
+if [ -f "$PROJECT_DIR/Sources/AgentsHub/Assets/AppIcon.icns" ]; then
+    cp "$PROJECT_DIR/Sources/AgentsHub/Assets/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+fi
+
 # Create PkgInfo
 echo -n "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 
 echo "==> Code signing ($SIGN_IDENTITY)..."
-# Sign nested binaries first
-codesign --force --sign "$SIGN_IDENTITY" "$APP_BUNDLE/Contents/MacOS/$CLI_NAME"
-codesign --force --sign "$SIGN_IDENTITY" "$APP_BUNDLE/Contents/MacOS/$APP_BINARY_NAME"
-# Sign the bundle
-codesign --force --sign "$SIGN_IDENTITY" \
-    --entitlements /dev/stdin \
-    "$APP_BUNDLE" <<'ENTITLEMENTS'
+# Write entitlements to a temp file (heredoc-to-/dev/stdin is unreliable)
+ENTITLEMENTS_FILE=$(mktemp /tmp/agentshub_entitlements.XXXXXX.plist)
+cat > "$ENTITLEMENTS_FILE" <<'ENTITLEMENTS'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -101,6 +102,15 @@ codesign --force --sign "$SIGN_IDENTITY" \
 </dict>
 </plist>
 ENTITLEMENTS
+
+# Sign nested binaries first
+codesign --force --sign "$SIGN_IDENTITY" "$APP_BUNDLE/Contents/MacOS/$CLI_NAME"
+codesign --force --sign "$SIGN_IDENTITY" "$APP_BUNDLE/Contents/MacOS/$APP_BINARY_NAME"
+# Sign the bundle with entitlements
+codesign --force --sign "$SIGN_IDENTITY" \
+    --entitlements "$ENTITLEMENTS_FILE" \
+    "$APP_BUNDLE"
+rm -f "$ENTITLEMENTS_FILE"
 
 echo "==> Done!"
 echo ""

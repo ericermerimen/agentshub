@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentsHub - Monitor Your Claude Code Sessions</title>
+    <meta name="description" content="A macOS menu bar app that monitors your Claude Code sessions. See status, jump to windows, get notifications when agents need you.">
+    <meta property="og:title" content="AgentsHub - Monitor Your Claude Code Sessions">
+    <meta property="og:description" content="Run multiple Claude Code agents. Know which one needs you. Jump there instantly.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ericermerimen.github.io/agentshub">
+    <meta name="twitter:card" content="summary_large_image">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --surface-2: #1c1c1c;
+            --border: #262626;
+            --text: #fafafa;
+            --text-2: #a1a1aa;
+            --text-3: #71717a;
+            --accent: #f97316;
+            --accent-dim: rgba(249, 115, 22, 0.15);
+            --green: #22c55e;
+            --blue: #3b82f6;
+            --red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Nav */
+        nav {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+        .nav-links a {
+            color: var(--text-2);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.15s;
+        }
+        .nav-links a:hover { color: var(--text); }
+
+        /* Hero */
+        .hero {
+            padding: 100px 0 80px;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--accent), #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 18px;
+            color: var(--text-2);
+            max-width: 560px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.15s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: var(--text);
+            color: var(--bg);
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { border-color: var(--text-3); }
+
+        /* Install block */
+        .install-block {
+            max-width: 600px;
+            margin: 40px auto 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .install-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+        .install-tab {
+            flex: 1;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-3);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .install-tab.active {
+            color: var(--text);
+            background: var(--surface-2);
+        }
+        .install-tab:hover:not(.active) { color: var(--text-2); }
+        .install-code {
+            display: none;
+            padding: 16px 20px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            color: var(--text-2);
+            white-space: pre;
+            overflow-x: auto;
+            position: relative;
+        }
+        .install-code.active { display: block; }
+        .install-code .prompt { color: var(--text-3); user-select: none; }
+        .install-code .cmd { color: var(--text); }
+
+        /* Features grid */
+        .features {
+            padding: 80px 0;
+        }
+        .features h2 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .features .subtitle {
+            text-align: center;
+            color: var(--text-2);
+            font-size: 16px;
+            margin-bottom: 48px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            transition: border-color 0.15s;
+        }
+        .feature-card:hover { border-color: var(--text-3); }
+        .feature-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 14px;
+        }
+        .feature-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }
+        .feature-card p {
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+
+        /* How it works */
+        .how-it-works {
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+        }
+        .how-it-works h2 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        .step {
+            text-align: center;
+        }
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-dim);
+            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .step h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .step p {
+            font-size: 13px;
+            color: var(--text-2);
+            line-height: 1.6;
+        }
+        .step code {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            color: var(--text-2);
+        }
+
+        /* Status legend */
+        .status-section {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+        }
+        .status-section h2 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .status-section .subtitle {
+            text-align: center;
+            color: var(--text-2);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-item strong {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .status-item span {
+            font-size: 12px;
+            color: var(--text-3);
+            margin-left: auto;
+        }
+
+        /* CTA */
+        .cta {
+            padding: 80px 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+        .cta h2 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+        .cta p {
+            color: var(--text-2);
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+        }
+        footer .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        footer p {
+            color: var(--text-3);
+            font-size: 13px;
+        }
+        footer a {
+            color: var(--text-3);
+            text-decoration: none;
+        }
+        footer a:hover { color: var(--text-2); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 32px; }
+            .feature-grid, .steps { grid-template-columns: 1fr; }
+            .status-grid { grid-template-columns: 1fr; }
+            .hero { padding: 60px 0 40px; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <div class="logo">AgentsHub</div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How it works</a>
+                <a href="https://github.com/ericermerimen/agentshub" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">Open Source -- MIT License</div>
+            <h1>Run 10 agents.<br><span>Know which one needs you.</span></h1>
+            <p>AgentsHub is a macOS menu bar app that monitors all your Claude Code sessions in real time. See status at a glance, jump to the right window instantly, get notified when agents need your input.</p>
+
+            <div class="hero-actions">
+                <a href="https://github.com/ericermerimen/agentshub/releases/latest" class="btn btn-primary">Download for macOS</a>
+                <a href="https://github.com/ericermerimen/agentshub" class="btn btn-secondary">View on GitHub</a>
+            </div>
+
+            <div class="install-block">
+                <div class="install-tabs">
+                    <button class="install-tab active" onclick="switchTab(this, 'brew')">Homebrew</button>
+                    <button class="install-tab" onclick="switchTab(this, 'curl')">curl</button>
+                    <button class="install-tab" onclick="switchTab(this, 'manual')">Manual</button>
+                </div>
+                <div id="brew" class="install-code active"><span class="prompt">$ </span><span class="cmd">brew tap ericermerimen/tap && brew install agentshub</span></div>
+                <div id="curl" class="install-code"><span class="prompt">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentshub/main/Scripts/install-remote.sh | bash</span></div>
+                <div id="manual" class="install-code"><span class="prompt">$ </span><span class="cmd">tar xzf AgentsHub-*.tar.gz && cp -r AgentsHub.app /Applications/</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="container">
+            <h2>Built for power users</h2>
+            <p class="subtitle">Everything you need to manage multiple Claude Code sessions without losing your mind.</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(34,197,94,0.12); color: #22c55e;">&#9679;</div>
+                    <h3>Live session status</h3>
+                    <p>See which agents are running, idle, waiting for input, or hit an error. Updated in real time via FSEvents.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(59,130,246,0.12); color: #3b82f6;">&#8599;</div>
+                    <h3>One-click window jump</h3>
+                    <p>Click any session to instantly focus its terminal window. Uses Accessibility API to find the right window even in complex setups.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: var(--accent-dim); color: var(--accent);">&#9888;</div>
+                    <h3>Smart notifications</h3>
+                    <p>Get notified when an agent needs input, finishes, errors out, or burns through 80% of its context window.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(168,85,247,0.12); color: #a855f7;">&#9638;</div>
+                    <h3>Project grouping</h3>
+                    <p>Sessions are grouped by project directory. Running 3 agents on the same repo? See them together.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(236,72,153,0.12); color: #ec4899;">&#9881;</div>
+                    <h3>Context window tracking</h3>
+                    <p>Visual progress bar shows how much context each session has consumed. Know when to start a fresh session.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(20,184,166,0.12); color: #14b8a6;">&#36;</div>
+                    <h3>Cost tracking</h3>
+                    <p>Optional per-session and total cost display. See your daily spend without leaving the menu bar.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(251,191,36,0.12); color: #fbbf24;">&#8984;</div>
+                    <h3>Global hotkey</h3>
+                    <p>Press Ctrl+Option+A from anywhere to toggle the popover. No clicking required.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(99,102,241,0.12); color: #6366f1;">&#8230;</div>
+                    <h3>Context menu</h3>
+                    <p>Right-click to copy path, open transcript, pin sessions, open a terminal at the project directory, or mark sessions done.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: rgba(244,63,94,0.12); color: #f43f5e;">&#9889;</div>
+                    <h3>CLI + hooks</h3>
+                    <p>Full CLI for scripting. Integrates with Claude Code hooks for automatic session tracking. One-click config setup.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <h2>Get started in 2 minutes</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <h3>Install</h3>
+                    <p>One command. Pre-built universal binary, no Xcode needed.</p>
+                    <code>brew install agentshub</code>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <h3>Add hooks</h3>
+                    <p>Open preferences, click "Copy Hook Config", paste into your Claude settings.</p>
+                    <code>~/.claude/settings.json</code>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <h3>Work</h3>
+                    <p>Start your Claude Code sessions as usual. AgentsHub tracks them automatically.</p>
+                    <code>Ctrl+Option+A</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="status-section">
+        <div class="container">
+            <h2>At-a-glance session status</h2>
+            <p class="subtitle">Every session state is color-coded and prioritized so you always know what needs attention.</p>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-dot" style="background: var(--accent);"></div>
+                    <strong>Needs Input</strong>
+                    <span>Agent waiting for you</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: var(--red);"></div>
+                    <strong>Error</strong>
+                    <span>Something went wrong</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: var(--green);"></div>
+                    <strong>Running</strong>
+                    <span>Agent is working</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: var(--blue);"></div>
+                    <strong>Idle</strong>
+                    <span>Waiting for your turn</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: #71717a;"></div>
+                    <strong>Done</strong>
+                    <span>Task completed</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: #71717a; opacity: 0.5;"></div>
+                    <strong>Unavailable</strong>
+                    <span>Process not found</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <h2>Stop tab-hunting. Start shipping.</h2>
+            <p>Free, open source, no account required. Just install and go.</p>
+            <div class="hero-actions">
+                <a href="https://github.com/ericermerimen/agentshub/releases/latest" class="btn btn-primary">Download for macOS</a>
+                <a href="https://github.com/ericermerimen/agentshub" class="btn btn-secondary">Star on GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>AgentsHub -- MIT License</p>
+            <a href="https://github.com/ericermerimen/agentshub">GitHub</a>
+        </div>
+    </footer>
+
+    <script>
+        function switchTab(el, id) {
+            document.querySelectorAll('.install-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.install-code').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById(id).classList.add('active');
+        }
+    </script>
+</body>
+</html>

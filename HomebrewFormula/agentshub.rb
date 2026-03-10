@@ -1,10 +1,9 @@
 class Agentshub < Formula
   desc "macOS menu bar app for monitoring Claude Code sessions"
   homepage "https://github.com/ericermerimen/agentshub"
-  url "https://github.com/ericermerimen/agentshub/releases/latest/download/AgentsHub-latest-macos.tar.gz"
-  version "0.1.0"
-  # sha256 will be filled in by the release workflow
-  # sha256 ""
+  # URL and sha256 are updated automatically by the release workflow
+  url "https://github.com/ericermerimen/agentshub/releases/download/v0.1.0/AgentsHub-v0.1.0-macos.tar.gz"
+  sha256 "PLACEHOLDER"
 
   depends_on :macos
   depends_on macos: :sonoma
@@ -32,7 +31,7 @@ class Agentshub < Formula
   end
 
   service do
-    run "#{prefix}/AgentsHub.app/Contents/MacOS/AgentsHub"
+    run "#{prefix}/AgentsHub.app/Contents/MacOS/AgentsHubApp"
     keep_alive true
     log_path var/"log/agentshub.log"
     error_log_path var/"log/agentshub-error.log"

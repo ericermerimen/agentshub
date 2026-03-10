@@ -16,7 +16,7 @@ let package = Package(
             name: "AgentsHub",
             dependencies: ["AgentsHubCore"],
             path: "Sources/AgentsHub",
-            exclude: ["Info.plist"]
+            exclude: ["Info.plist", "Assets"]
         ),
         .executableTarget(
             name: "AgentsHubCLI",

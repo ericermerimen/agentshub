@@ -16,8 +16,8 @@ rm -rf /Applications/AgentsHub.app
 cp -r "$PROJECT_DIR/AgentsHub.app" /Applications/
 
 echo "==> Installing CLI to /usr/local/bin..."
-mkdir -p /usr/local/bin
-ln -sf /Applications/AgentsHub.app/Contents/MacOS/agentshub /usr/local/bin/agentshub
+sudo mkdir -p /usr/local/bin
+sudo ln -sf /Applications/AgentsHub.app/Contents/MacOS/agentshub /usr/local/bin/agentshub
 
 echo ""
 echo "==> Installation complete!"

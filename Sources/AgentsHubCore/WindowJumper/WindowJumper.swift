@@ -5,45 +5,75 @@ import ApplicationServices
 public final class WindowJumper {
     public init() {}
 
+    /// Bundle identifiers for common terminal apps
+    private static let terminalBundleIds: [String] = [
+        "com.apple.Terminal",
+        "com.googlecode.iterm2",
+        "dev.warp.Warp-Stable",
+        "com.mitchellh.ghostty",
+        "io.alacritty",
+        "net.kovidgoyal.kitty",
+        "com.github.wez.wezterm",
+    ]
+
     /// Attempt to focus the window for a given session
     public func jumpTo(session: Session) -> Bool {
-        guard let appName = session.app else { return false }
+        // Strategy 1: Use app name + pid if available (original path)
+        if let appName = session.app {
+            if let app = findRunningApp(named: appName) ?? findAppByPid(session.pid) {
+                app.activate()
+                if let pid = session.pid {
+                    raiseWindowForPid(pid, in: app)
+                }
+                return true
+            }
+        }
 
-        // Find the running application
+        // Strategy 2: Use pid to walk up to parent app
+        if let pid = session.pid, let app = findAppByPid(pid) {
+            app.activate()
+            raiseWindowForPid(pid, in: app)
+            return true
+        }
+
+        // Strategy 3: Use cwd to find the terminal window whose title contains the directory
+        if let cwd = session.cwd {
+            if let (app, window) = findTerminalWindowByCwd(cwd) {
+                app.activate()
+                AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+                return true
+            }
+
+            // Strategy 4: Fall back to activating any running terminal app
+            if let app = findAnyTerminalApp() {
+                app.activate()
+                return true
+            }
+        }
+
+        return false
+    }
+
+    // MARK: - Private helpers
+
+    private func findRunningApp(named appName: String) -> NSRunningApplication? {
         let apps = NSWorkspace.shared.runningApplications
-        let app = apps.first { runningApp in
+        return apps.first { runningApp in
             let name = runningApp.localizedName?.lowercased() ?? ""
             return name.contains(appName) ||
                    ProcessScanner.appNameMap.values.contains(where: { $0 == appName && name.contains($0) })
         }
-
-        // Fallback: match by PID's parent app
-        let targetApp = app ?? findAppByPid(session.pid)
-
-        guard let targetApp else { return false }
-
-        // Activate the app
-        targetApp.activate()
-
-        // Try to raise the specific window via Accessibility API
-        if let pid = session.pid {
-            raiseWindowForPid(pid, in: targetApp)
-        }
-
-        return true
     }
 
     private func findAppByPid(_ pid: Int?) -> NSRunningApplication? {
         guard let pid else { return nil }
 
-        // Walk up the process tree to find an app
         var currentPid = pid
-        for _ in 0..<10 { // max depth
+        for _ in 0..<10 {
             if let app = NSRunningApplication(processIdentifier: pid_t(currentPid)),
                app.activationPolicy == .regular {
                 return app
             }
-            // Get parent PID
             var info = kinfo_proc()
             var size = MemoryLayout<kinfo_proc>.size
             var mib = [CTL_KERN, KERN_PROC, KERN_PROC_PID, Int32(currentPid)]
@@ -55,6 +85,59 @@ public final class WindowJumper {
         return nil
     }
 
+    /// Find a terminal window whose title contains the cwd (or its last path component)
+    private func findTerminalWindowByCwd(_ cwd: String) -> (NSRunningApplication, AXUIElement)? {
+        let dirName = URL(fileURLWithPath: cwd).lastPathComponent
+        let terminalApps = runningTerminalApps()
+
+        for app in terminalApps {
+            let appRef = AXUIElementCreateApplication(app.processIdentifier)
+
+            var windowsRef: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &windowsRef) == .success,
+                  let windows = windowsRef as? [AXUIElement] else { continue }
+
+            for window in windows {
+                guard let title = windowTitle(window) else { continue }
+
+                // Match full path first, then directory name
+                if title.contains(cwd) || title.contains(dirName) {
+                    return (app, window)
+                }
+            }
+        }
+
+        return nil
+    }
+
+    /// Get all running terminal apps
+    private func runningTerminalApps() -> [NSRunningApplication] {
+        let apps = NSWorkspace.shared.runningApplications
+        return apps.filter { app in
+            guard app.activationPolicy == .regular else { return false }
+            if let bundleId = app.bundleIdentifier,
+               Self.terminalBundleIds.contains(bundleId) {
+                return true
+            }
+            // Also match by name for terminals not in the bundle ID list
+            let name = (app.localizedName ?? "").lowercased()
+            return ProcessScanner.appNameMap.keys.contains(where: { $0.lowercased() == name })
+        }
+    }
+
+    /// Get the title of an AXUIElement window
+    private func windowTitle(_ window: AXUIElement) -> String? {
+        var titleRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &titleRef) == .success,
+              let title = titleRef as? String else { return nil }
+        return title
+    }
+
+    /// Find any running terminal app as a last resort
+    private func findAnyTerminalApp() -> NSRunningApplication? {
+        return runningTerminalApps().first
+    }
+
     private func raiseWindowForPid(_ pid: Int, in app: NSRunningApplication) {
         let appRef = AXUIElementCreateApplication(app.processIdentifier)
 
@@ -62,7 +145,6 @@ public final class WindowJumper {
         guard AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &windowsRef) == .success,
               let windows = windowsRef as? [AXUIElement] else { return }
 
-        // Raise the first window (best effort)
         if let window = windows.first {
             AXUIElementPerformAction(window, kAXRaiseAction as CFString)
             AXUIElementSetAttributeValue(window, kAXFocusedAttribute as CFString, true as CFTypeRef)

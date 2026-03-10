@@ -13,8 +13,11 @@ public final class SessionStore {
     }
 
     private func ensureDirectory() throws {
-        if !FileManager.default.fileExists(atPath: directory.path) {
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let fm = FileManager.default
+        if !fm.fileExists(atPath: directory.path) {
+            try fm.createDirectory(at: directory, withIntermediateDirectories: true)
+            // Restrict session directory to owner-only (0700)
+            try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
         }
     }
 
@@ -53,6 +56,33 @@ public final class SessionStore {
         let sessions = try listAll()
         var count = 0
         for session in sessions where session.status == .unavailable {
+            try delete(id: session.id)
+            count += 1
+        }
+        return count
+    }
+
+    /// Delete all sessions with done/error status.
+    @discardableResult
+    public func deleteHistory() throws -> Int {
+        let sessions = try listAll()
+        var count = 0
+        for session in sessions where session.status == .done || session.status == .error {
+            try delete(id: session.id)
+            count += 1
+        }
+        return count
+    }
+
+    /// Delete sessions older than the given interval.
+    @discardableResult
+    public func deleteOlderThan(_ interval: TimeInterval) throws -> Int {
+        let sessions = try listAll()
+        let cutoff = Date().addingTimeInterval(-interval)
+        var count = 0
+        for session in sessions where session.lastEventAt < cutoff {
+            // Only auto-purge finished sessions
+            guard session.status == .done || session.status == .error || session.status == .unavailable else { continue }
             try delete(id: session.id)
             count += 1
         }

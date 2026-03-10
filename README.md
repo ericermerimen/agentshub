@@ -5,12 +5,20 @@ A macOS menu bar app that monitors your Claude Code sessions, shows their status
 ## Features
 
 - **Menu bar icon** with active session count and attention badge
-- **Live session list** — see all running, idle, and needs-input sessions
-- **Window jumping** — click a session to focus its terminal/editor window
-- **macOS notifications** when a session needs your input
+- **Live session list** -- see all running, idle, and needs-input sessions at a glance
+- **Active / History tabs** -- triage active work, review finished sessions separately
+- **Window jumping** -- click a session to focus its terminal/editor window
+- **Global hotkey** -- `Ctrl+Option+A` toggles the popover from anywhere
+- **macOS notifications** -- alerts when a session needs input, hits an error, or finishes
+- **Context menu** -- right-click to copy path/session ID, open transcript, mark done, or delete
+- **Context window bar** -- see how much of Claude's context each session has consumed
+- **Cost tracking** -- optional per-session cost display (enable in Preferences)
+- **Session grouping** -- sessions grouped by project directory
+- **Auto-purge** -- finished sessions older than 24h are cleaned up automatically
+- **Search** -- filter sessions by name, project, or task
 - **CLI tool** (`agentshub`) for scripting and Claude Code hook integration
-- **FSEvents watcher** — updates instantly when session state changes
-- **Preferences** — launch at login, scan interval, notification controls
+- **FSEvents watcher** -- updates instantly when session state changes
+- **Preferences** -- launch at login, scan interval, notification controls
 
 ## Requirements
 
@@ -18,30 +26,24 @@ A macOS menu bar app that monitors your Claude Code sessions, shows their status
 
 ## Install
 
-### One-line install (recommended)
-
-No Xcode required — downloads the pre-built `.app` from GitHub Releases:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentshub/main/Scripts/install-remote.sh | bash
-```
-
-Then start the app:
-
-```bash
-open /Applications/AgentsHub.app
-```
-
-### Homebrew
-
-> **Note:** Requires creating the [homebrew-tap](https://github.com/ericermerimen/homebrew-tap) repo first. See [Homebrew Setup](#homebrew-setup) below.
+### Homebrew (recommended)
 
 ```bash
 brew tap ericermerimen/tap
 brew install agentshub
+open $(brew --prefix)/AgentsHub.app
 ```
 
-### Download manually from GitHub Releases
+### One-line install
+
+Downloads the pre-built `.app` from GitHub Releases. No Xcode required:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentshub/main/Scripts/install-remote.sh | bash
+open /Applications/AgentsHub.app
+```
+
+### Manual download
 
 1. Go to [Releases](https://github.com/ericermerimen/agentshub/releases/latest)
 2. Download `AgentsHub-vX.X.X-macos.tar.gz`
@@ -55,39 +57,13 @@ ln -sf /Applications/AgentsHub.app/Contents/MacOS/agentshub /usr/local/bin/agent
 
 ### Build from source
 
-Only needed if you want to develop or modify AgentsHub. Requires Xcode 15+ or Swift 5.9+.
+For contributors and developers. Requires Xcode 15+ or Swift 5.9+.
 
 ```bash
 git clone https://github.com/ericermerimen/agentshub.git
 cd agentshub
 ./Scripts/install.sh
 ```
-
-## Creating a Release
-
-Tag a version to trigger the GitHub Actions build:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-This builds a universal binary (arm64 + x86_64), packages the `.app`, and publishes it as a GitHub Release — no Xcode needed on the user's machine.
-
-## Homebrew Setup
-
-To enable `brew install`, create a **separate** repo called [`homebrew-tap`](https://github.com/ericermerimen/homebrew-tap) and copy the formula:
-
-```bash
-# Create the tap repo on GitHub, then:
-gh repo create ericermerimen/homebrew-tap --public
-git clone https://github.com/ericermerimen/homebrew-tap.git
-mkdir -p homebrew-tap/Formula
-cp HomebrewFormula/agentshub.rb homebrew-tap/Formula/agentshub.rb
-cd homebrew-tap && git add . && git commit -m "Add agentshub formula" && git push
-```
-
-After a release, update the `url` and `sha256` in the formula to match the new release tarball.
 
 ## CLI Usage
 
@@ -103,6 +79,13 @@ agentshub status
 
 # Report an event (used by hooks)
 agentshub report --session SESSION_ID --event tool-use --name "My Task"
+
+# Clear finished sessions from history
+agentshub clear --all
+agentshub clear --older-than 12  # hours
+
+# Delete a specific session
+agentshub delete SESSION_ID
 ```
 
 ## Claude Code Hook Setup
@@ -125,6 +108,10 @@ AgentsHub works best with Claude Code hooks. Open the app preferences and click 
 }
 ```
 
+## Keyboard Shortcut
+
+Press `Ctrl+Option+A` from anywhere to toggle the AgentsHub popover. No need to click the menu bar icon.
+
 ## Accessibility Permission
 
 AgentsHub uses the macOS Accessibility API to focus terminal windows when you click a session. On first launch, macOS will prompt you to grant Accessibility access in **System Settings > Privacy & Security > Accessibility**.
@@ -144,6 +131,19 @@ rm -f /usr/local/bin/agentshub
 rm -rf ~/.agentshub
 ```
 
+## Creating a Release
+
+Tag a version to trigger the GitHub Actions build:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+This builds a universal binary (arm64 + x86_64), packages the `.app`, publishes it as a GitHub Release, and automatically updates the Homebrew formula.
+
+To enable automatic Homebrew tap updates, add a `TAP_TOKEN` secret to your repo (a personal access token with `repo` scope for `ericermerimen/homebrew-tap`).
+
 ## Architecture
 
 ```
@@ -151,12 +151,12 @@ Sources/
 ├── AgentsHub/           # macOS menu bar app (SwiftUI + AppKit)
 │   ├── AgentsHubApp.swift
 │   ├── Views/
-│   │   ├── StatusItemController.swift
 │   │   ├── PopoverView.swift
 │   │   ├── SessionRowView.swift
 │   │   └── PreferencesView.swift
 │   ├── Notifications/
 │   │   └── NotificationManager.swift
+│   ├── Assets/
 │   └── Info.plist
 ├── AgentsHubCLI/        # CLI tool (ArgumentParser)
 │   └── main.swift
@@ -172,7 +172,7 @@ Sources/
 
 ## Data Storage
 
-Session files are stored as JSON in `~/.agentshub/sessions/`. Each session gets its own file (`<session-id>.json`).
+Session files are stored as JSON in `~/.agentshub/sessions/`. Each session gets its own file (`<session-id>.json`). The directory is created with owner-only permissions (0700).
 
 ## License
 
