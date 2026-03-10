@@ -31,7 +31,7 @@ class Agentshub < Formula
   end
 
   service do
-    run "#{prefix}/AgentsHub.app/Contents/MacOS/AgentsHubApp"
+    run [opt_prefix/"AgentsHub.app/Contents/MacOS/AgentsHubApp"]
     keep_alive true
     log_path var/"log/agentshub.log"
     error_log_path var/"log/agentshub-error.log"
