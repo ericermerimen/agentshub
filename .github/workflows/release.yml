@@ -23,7 +23,7 @@ jobs:
           mkdir -p pkg
           cp -r AgentsHub.app pkg/
           touch pkg/.brew_home
-          tar -czf AgentsHub-${{ github.ref_name }}-macos.tar.gz -C pkg .
+          tar -czf AgentsHub-${{ github.ref_name }}-macos.tar.gz -C pkg AgentsHub.app .brew_home
           cp AgentsHub.app/Contents/MacOS/agentshub agentshub-cli
           tar -czf agentshub-cli-${{ github.ref_name }}-macos.tar.gz agentshub-cli
 
