@@ -29,8 +29,7 @@ A macOS menu bar app that monitors your Claude Code sessions, shows their status
 ### Homebrew (recommended)
 
 ```bash
-brew tap ericermerimen/tap
-brew install agentshub
+brew install ericermerimen/tap/agentshub
 open $(brew --prefix)/AgentsHub.app
 ```
 

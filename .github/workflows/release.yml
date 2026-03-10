@@ -46,8 +46,7 @@ jobs:
 
             **Homebrew:**
             ```bash
-            brew tap ericermerimen/tap
-            brew install agentshub
+            brew install ericermerimen/tap/agentshub
             ```
 
             **Manual download:**
