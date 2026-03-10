@@ -1,5 +1,5 @@
 import XCTest
-@testable import AgentsHubCore
+@testable import AgentPingCore
 
 final class ReportCommandTests: XCTestCase {
     var store: SessionStore!
@@ -7,7 +7,7 @@ final class ReportCommandTests: XCTestCase {
 
     override func setUp() {
         tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("agentshub-cli-\(UUID().uuidString)")
+            .appendingPathComponent("agentping-cli-\(UUID().uuidString)")
         store = SessionStore(directory: tempDir)
     }
 

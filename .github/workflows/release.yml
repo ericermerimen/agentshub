@@ -21,25 +21,25 @@ jobs:
         run: |
           # Include LICENSE so Homebrew sees multiple top-level entries and doesn't strip the .app
           mkdir -p pkg
-          cp -r AgentsHub.app pkg/
+          cp -r AgentPing.app pkg/
           cp LICENSE pkg/
-          tar -czf AgentsHub-${{ github.ref_name }}-macos.tar.gz -C pkg AgentsHub.app LICENSE
-          cp AgentsHub.app/Contents/MacOS/agentshub agentshub-cli
-          tar -czf agentshub-cli-${{ github.ref_name }}-macos.tar.gz agentshub-cli
+          tar -czf AgentPing-${{ github.ref_name }}-macos.tar.gz -C pkg AgentPing.app LICENSE
+          cp AgentPing.app/Contents/MacOS/agentping agentping-cli
+          tar -czf agentping-cli-${{ github.ref_name }}-macos.tar.gz agentping-cli
 
       - name: Compute SHA256
         id: sha
         run: |
-          echo "app_sha=$(shasum -a 256 AgentsHub-${{ github.ref_name }}-macos.tar.gz | awk '{print $1}')" >> "$GITHUB_OUTPUT"
-          echo "cli_sha=$(shasum -a 256 agentshub-cli-${{ github.ref_name }}-macos.tar.gz | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "app_sha=$(shasum -a 256 AgentPing-${{ github.ref_name }}-macos.tar.gz | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "cli_sha=$(shasum -a 256 agentping-cli-${{ github.ref_name }}-macos.tar.gz | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: |
-            AgentsHub-${{ github.ref_name }}-macos.tar.gz
-            agentshub-cli-${{ github.ref_name }}-macos.tar.gz
+            AgentPing-${{ github.ref_name }}-macos.tar.gz
+            agentping-cli-${{ github.ref_name }}-macos.tar.gz
           body: |
             ## Install
 
@@ -50,19 +50,19 @@ jobs:
 
             **Homebrew:**
             ```bash
-            brew install ericermerimen/tap/agentshub
+            brew install ericermerimen/tap/agentping
             ```
 
             **Manual download:**
             ```bash
-            tar xzf AgentsHub-${{ github.ref_name }}-macos.tar.gz
-            cp -r AgentsHub.app /Applications/
-            ln -sf /Applications/AgentsHub.app/Contents/MacOS/agentshub /usr/local/bin/agentshub
+            tar xzf AgentPing-${{ github.ref_name }}-macos.tar.gz
+            cp -r AgentPing.app /Applications/
+            ln -sf /Applications/AgentPing.app/Contents/MacOS/agentping /usr/local/bin/agentping
             ```
 
             ## SHA256 checksums
-            - `AgentsHub-${{ github.ref_name }}-macos.tar.gz`: `${{ steps.sha.outputs.app_sha }}`
-            - `agentshub-cli-${{ github.ref_name }}-macos.tar.gz`: `${{ steps.sha.outputs.cli_sha }}`
+            - `AgentPing-${{ github.ref_name }}-macos.tar.gz`: `${{ steps.sha.outputs.app_sha }}`
+            - `agentping-cli-${{ github.ref_name }}-macos.tar.gz`: `${{ steps.sha.outputs.cli_sha }}`
 
       - name: Update Homebrew tap formula
         env:
@@ -71,7 +71,7 @@ jobs:
         run: |
           VERSION="${{ github.ref_name }}"
           SHA="${{ steps.sha.outputs.app_sha }}"
-          URL="https://github.com/ericermerimen/agentshub/releases/download/${VERSION}/AgentsHub-${VERSION}-macos.tar.gz"
+          URL="https://github.com/ericermerimen/agentshub/releases/download/${VERSION}/AgentPing-${VERSION}-macos.tar.gz"
 
           # Clone the tap repo
           git clone "https://x-access-token:${TAP_TOKEN}@github.com/ericermerimen/homebrew-tap.git" /tmp/homebrew-tap
@@ -80,8 +80,8 @@ jobs:
           mkdir -p Formula
 
           # Generate updated formula
-          cat > Formula/agentshub.rb << FORMULA
-          class Agentshub < Formula
+          cat > Formula/agentping.rb << FORMULA
+          class Agentping < Formula
             desc "macOS menu bar app for monitoring Claude Code sessions"
             homepage "https://github.com/ericermerimen/agentshub"
             url "${URL}"
@@ -91,19 +91,19 @@ jobs:
             depends_on macos: :sonoma
 
             def install
-              prefix.install "AgentsHub.app"
-              bin.install_symlink prefix/"AgentsHub.app/Contents/MacOS/agentshub"
+              prefix.install "AgentPing.app"
+              bin.install_symlink prefix/"AgentPing.app/Contents/MacOS/agentping"
             end
 
             def caveats
               <<~EOS
-                AgentsHub.app has been installed to:
-                  #{prefix}/AgentsHub.app
+                AgentPing.app has been installed to:
+                  #{prefix}/AgentPing.app
 
                 To start the menu bar app:
-                  open #{prefix}/AgentsHub.app
+                  open #{prefix}/AgentPing.app
 
-                To set up Claude Code hooks, open AgentsHub preferences
+                To set up Claude Code hooks, open AgentPing preferences
                 and click "Copy Hook Config to Clipboard", then paste
                 into ~/.claude/settings.json
 
@@ -113,16 +113,16 @@ jobs:
             end
 
             service do
-              run [opt_prefix/"AgentsHub.app/Contents/MacOS/AgentsHubApp"]
+              run [opt_prefix/"AgentPing.app/Contents/MacOS/AgentPingApp"]
               keep_alive true
-              log_path var/"log/agentshub.log"
-              error_log_path var/"log/agentshub-error.log"
+              log_path var/"log/agentping.log"
+              error_log_path var/"log/agentping-error.log"
             end
           end
           FORMULA
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/agentshub.rb
-          git commit -m "Update agentshub to ${VERSION}" || true
+          git add Formula/agentping.rb
+          git commit -m "Update agentping to ${VERSION}" || true
           git push

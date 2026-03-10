@@ -1,5 +1,5 @@
 import XCTest
-@testable import AgentsHubCore
+@testable import AgentPingCore
 
 final class SessionTests: XCTestCase {
     func testSessionDecoding() throws {
@@ -17,7 +17,7 @@ final class SessionTests: XCTestCase {
         }
         """.data(using: .utf8)!
 
-        let session = try JSONDecoder.agentsHub.decode(Session.self, from: json)
+        let session = try JSONDecoder.agentPing.decode(Session.self, from: json)
         XCTAssertEqual(session.id, "session-abc123")
         XCTAssertEqual(session.name, "Backend Refactor")
         XCTAssertEqual(session.status, .running)
@@ -38,8 +38,8 @@ final class SessionTests: XCTestCase {
             lastEventAt: Date(),
             notifications: true
         )
-        let data = try JSONEncoder.agentsHub.encode(session)
-        let decoded = try JSONDecoder.agentsHub.decode(Session.self, from: data)
+        let data = try JSONEncoder.agentPing.encode(session)
+        let decoded = try JSONDecoder.agentPing.decode(Session.self, from: data)
         XCTAssertEqual(decoded.id, session.id)
         XCTAssertEqual(decoded.status, .running)
     }

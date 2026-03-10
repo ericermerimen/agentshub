@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# AgentsHub - Build and package as macOS .app bundle
+# AgentPing - Build and package as macOS .app bundle
 # Usage: ./Scripts/package_app.sh [--release] [--universal] [--sign IDENTITY] [--skip-build]
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-APP_NAME="AgentsHub"
-APP_BINARY_NAME="AgentsHubApp"
-CLI_NAME="agentshub"
+APP_NAME="AgentPing"
+APP_BINARY_NAME="AgentPingApp"
+CLI_NAME="agentping"
 APP_BUNDLE="$PROJECT_DIR/$APP_NAME.app"
 
 CONFIG="debug"
@@ -44,7 +44,7 @@ else
 fi
 
 if [ "$SKIP_BUILD" = false ]; then
-    echo "==> Building AgentsHub ($CONFIG, universal=$UNIVERSAL)..."
+    echo "==> Building AgentPing ($CONFIG, universal=$UNIVERSAL)..."
     cd "$PROJECT_DIR"
 
     if [ "$UNIVERSAL" = true ]; then
@@ -79,11 +79,11 @@ if [ -f "$CLI_BINARY" ]; then
 fi
 
 # Copy Info.plist
-cp "$PROJECT_DIR/Sources/AgentsHub/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
+cp "$PROJECT_DIR/Sources/AgentPing/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
 
 # Copy app icon
-if [ -f "$PROJECT_DIR/Sources/AgentsHub/Assets/AppIcon.icns" ]; then
-    cp "$PROJECT_DIR/Sources/AgentsHub/Assets/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
+if [ -f "$PROJECT_DIR/Sources/AgentPing/Assets/AppIcon.icns" ]; then
+    cp "$PROJECT_DIR/Sources/AgentPing/Assets/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
 fi
 
 # Create PkgInfo
@@ -91,7 +91,7 @@ echo -n "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 
 echo "==> Code signing ($SIGN_IDENTITY)..."
 # Write entitlements to a temp file (heredoc-to-/dev/stdin is unreliable)
-ENTITLEMENTS_FILE=$(mktemp /tmp/agentshub_entitlements.XXXXXX.plist)
+ENTITLEMENTS_FILE=$(mktemp /tmp/agentping_entitlements.XXXXXX.plist)
 cat > "$ENTITLEMENTS_FILE" <<'ENTITLEMENTS'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

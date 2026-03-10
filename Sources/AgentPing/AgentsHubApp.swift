@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import Carbon.HIToolbox
-import AgentsHubCore
+import AgentPingCore
 import Combine
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "circle.grid.2x2", accessibilityDescription: "AgentsHub")
+            button.image = NSImage(systemSymbolName: "circle.grid.2x2", accessibilityDescription: "AgentPing")
             button.action = #selector(togglePopover)
             button.target = self
         }
@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem.button else { return }
         let attentionCount = sessions.filter { $0.status == .needsInput || $0.status == .idle }.count
         let symbolName = attentionCount > 0 ? "circle.grid.2x2.fill" : "circle.grid.2x2"
-        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "AgentsHub")
+        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "AgentPing")
         button.title = attentionCount > 0 ? " \(attentionCount)" : ""
     }
 
@@ -171,7 +171,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Global Hotkey (Ctrl+Option+A)
 
     private func registerGlobalHotKey() {
-        let hotKeyID = EventHotKeyID(signature: OSType(0x41_48_55_42), id: 1) // "AHUB"
+        let hotKeyID = EventHotKeyID(signature: OSType(0x41_50_4E_47), id: 1) // "APNG"
         // kVK_ANSI_A = 0x00, controlKey + optionKey
         var ref: EventHotKeyRef?
         let status = RegisterEventHotKey(

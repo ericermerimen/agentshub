@@ -7,14 +7,14 @@
     <key>LSUIElement</key>
     <true/>
     <key>CFBundleExecutable</key>
-    <string>AgentsHubApp</string>
+    <string>AgentPingApp</string>
     <key>CFBundleName</key>
-    <string>AgentsHub</string>
+    <string>AgentPing</string>
     <key>CFBundleIdentifier</key>
-    <string>com.agentshub.app</string>
+    <string>com.agentping.app</string>
     <key>CFBundleVersion</key>
     <string>1.0.0</string>
     <key>NSAccessibilityUsageDescription</key>
-    <string>AgentsHub needs accessibility access to focus terminal windows when you click on a session.</string>
+    <string>AgentPing needs accessibility access to focus terminal windows when you click on a session.</string>
 </dict>
 </plist>

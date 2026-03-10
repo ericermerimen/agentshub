@@ -5,7 +5,7 @@ public final class SessionStore {
 
     public init(directory: URL? = nil) {
         self.directory = directory ?? FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".agentshub/sessions")
+            .appendingPathComponent(".agentping/sessions")
     }
 
     private func filePath(for id: String) -> URL {
@@ -23,7 +23,7 @@ public final class SessionStore {
 
     public func write(_ session: Session) throws {
         try ensureDirectory()
-        let data = try JSONEncoder.agentsHub.encode(session)
+        let data = try JSONEncoder.agentPing.encode(session)
         try data.write(to: filePath(for: session.id), options: .atomic)
     }
 
@@ -31,7 +31,7 @@ public final class SessionStore {
         let path = filePath(for: id)
         guard FileManager.default.fileExists(atPath: path.path) else { return nil }
         let data = try Data(contentsOf: path)
-        return try JSONDecoder.agentsHub.decode(Session.self, from: data)
+        return try JSONDecoder.agentPing.decode(Session.self, from: data)
     }
 
     public func listAll() throws -> [Session] {
@@ -40,7 +40,7 @@ public final class SessionStore {
             .filter { $0.pathExtension == "json" }
         return try files.compactMap { url in
             let data = try Data(contentsOf: url)
-            return try? JSONDecoder.agentsHub.decode(Session.self, from: data)
+            return try? JSONDecoder.agentPing.decode(Session.self, from: data)
         }
     }
 

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgentsHub - Monitor Your Claude Code Sessions</title>
+    <title>AgentPing - Monitor Your Claude Code Sessions</title>
     <meta name="description" content="A macOS menu bar app that monitors your Claude Code sessions. See status, jump to windows, get notifications when agents need you.">
-    <meta property="og:title" content="AgentsHub - Monitor Your Claude Code Sessions">
+    <meta property="og:title" content="AgentPing - Monitor Your Claude Code Sessions">
     <meta property="og:description" content="Run multiple Claude Code agents. Know which one needs you. Jump there instantly.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ericermerimen.github.io/agentshub">
@@ -19,8 +19,8 @@
             --text: #fafafa;
             --text-2: #a1a1aa;
             --text-3: #71717a;
-            --accent: #f97316;
-            --accent-dim: rgba(249, 115, 22, 0.15);
+            --accent: #06b6d4;
+            --accent-dim: rgba(6, 182, 212, 0.15);
             --green: #22c55e;
             --blue: #3b82f6;
             --red: #ef4444;
@@ -93,7 +93,7 @@
             margin-bottom: 20px;
         }
         .hero h1 span {
-            background: linear-gradient(135deg, var(--accent), #fb923c);
+            background: linear-gradient(135deg, var(--accent), #22d3ee);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -386,7 +386,7 @@
 <body>
     <nav>
         <div class="container">
-            <div class="logo">AgentsHub</div>
+            <div class="logo">AgentPing</div>
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#how-it-works">How it works</a>
@@ -399,7 +399,7 @@
         <div class="container">
             <div class="hero-badge">Open Source -- MIT License</div>
             <h1>Run 10 agents.<br><span>Know which one needs you.</span></h1>
-            <p>AgentsHub is a macOS menu bar app that monitors all your Claude Code sessions in real time. See status at a glance, jump to the right window instantly, get notified when agents need your input.</p>
+            <p>AgentPing is a macOS menu bar app that monitors all your Claude Code sessions in real time. See status at a glance, jump to the right window instantly, get notified when agents need your input.</p>
 
             <div class="hero-actions">
                 <a href="https://github.com/ericermerimen/agentshub/releases/latest" class="btn btn-primary">Download for macOS</a>
@@ -412,9 +412,9 @@
                     <button class="install-tab" onclick="switchTab(this, 'curl')">curl</button>
                     <button class="install-tab" onclick="switchTab(this, 'manual')">Manual</button>
                 </div>
-                <div id="brew" class="install-code active"><span class="prompt">$ </span><span class="cmd">brew install ericermerimen/tap/agentshub</span></div>
+                <div id="brew" class="install-code active"><span class="prompt">$ </span><span class="cmd">brew install ericermerimen/tap/agentping</span></div>
                 <div id="curl" class="install-code"><span class="prompt">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentshub/main/Scripts/install-remote.sh | bash</span></div>
-                <div id="manual" class="install-code"><span class="prompt">$ </span><span class="cmd">tar xzf AgentsHub-*.tar.gz && cp -r AgentsHub.app /Applications/</span></div>
+                <div id="manual" class="install-code"><span class="prompt">$ </span><span class="cmd">tar xzf AgentPing-*.tar.gz && cp -r AgentPing.app /Applications/</span></div>
             </div>
         </div>
     </section>
@@ -482,7 +482,7 @@
                     <div class="step-num">1</div>
                     <h3>Install</h3>
                     <p>One command. Pre-built universal binary, no Xcode needed.</p>
-                    <code>brew install ericermerimen/tap/agentshub</code>
+                    <code>brew install ericermerimen/tap/agentping</code>
                 </div>
                 <div class="step">
                     <div class="step-num">2</div>
@@ -493,7 +493,7 @@
                 <div class="step">
                     <div class="step-num">3</div>
                     <h3>Work</h3>
-                    <p>Start your Claude Code sessions as usual. AgentsHub tracks them automatically.</p>
+                    <p>Start your Claude Code sessions as usual. AgentPing tracks them automatically.</p>
                     <code>Ctrl+Option+A</code>
                 </div>
             </div>
@@ -552,7 +552,7 @@
 
     <footer>
         <div class="container">
-            <p>AgentsHub -- MIT License</p>
+            <p>AgentPing -- MIT License</p>
             <a href="https://github.com/ericermerimen/agentshub">GitHub</a>
         </div>
     </footer>
