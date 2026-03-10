@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # AgentPing installer — downloads pre-built .app from GitHub Releases
-# Usage: curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentshub/main/Scripts/install-remote.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentping/main/Scripts/install-remote.sh | bash
 
-REPO="ericermerimen/agentshub"
+REPO="ericermerimen/agentping"
 INSTALL_DIR="/Applications"
 CLI_LINK="/usr/local/bin/agentping"
 
@@ -15,7 +15,7 @@ if [ -z "$TAG" ]; then
     echo "ERROR: Could not find a release. Check https://github.com/$REPO/releases"
     echo ""
     echo "If no release exists yet, build from source instead:"
-    echo "  git clone https://github.com/$REPO.git && cd agentshub && ./Scripts/install.sh"
+    echo "  git clone https://github.com/$REPO.git && cd agentping && ./Scripts/install.sh"
     exit 1
 fi
 
