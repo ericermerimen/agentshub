@@ -47,7 +47,7 @@ jobs:
             **Homebrew (recommended):**
             ```bash
             brew install ericermerimen/tap/agentping
-            open $(brew --prefix)/opt/agentping/AgentPing.app
+            brew services start agentping
             ```
 
             **One-line install:**
@@ -109,14 +109,15 @@ jobs:
               <<~EOS
 
                 ╔══════════════════════════════════════════════════╗
-                ║  IMPORTANT: Run this to start AgentPing         ║
+                ║  Run these commands to get started:              ║
                 ╚══════════════════════════════════════════════════╝
 
-                  open #{opt_prefix}/AgentPing.app
+                  brew services start agentping
 
-                To add to ~/Applications (Spotlight + Launchpad):
+                This launches AgentPing and auto-starts it on login.
+                After future upgrades, run:
 
-                  mkdir -p ~/Applications && cp -pR #{opt_prefix}/AgentPing.app ~/Applications/
+                  brew upgrade agentping && brew services restart agentping
 
                 ──────────────────────────────────────────────────
                 Next steps:

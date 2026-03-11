@@ -33,13 +33,14 @@ A macOS menu bar app that monitors your Claude Code sessions, shows their status
 
 ```bash
 brew install ericermerimen/tap/agentping
-open $(brew --prefix)/opt/agentping/AgentPing.app
+brew services start agentping
 ```
 
-> **Tip:** To add AgentPing to Spotlight and Launchpad, run:
-> ```bash
-> mkdir -p ~/Applications && cp -pR $(brew --prefix)/opt/agentping/AgentPing.app ~/Applications/
-> ```
+This launches AgentPing and auto-starts it on login. To upgrade:
+
+```bash
+brew upgrade agentping && brew services restart agentping
+```
 
 ### One-line install
 
@@ -162,7 +163,6 @@ AgentPing uses the macOS Accessibility API to focus terminal windows when you cl
 ```bash
 brew services stop agentping
 brew uninstall agentping
-rm -rf ~/Applications/AgentPing.app
 ```
 
 **Manual:**
