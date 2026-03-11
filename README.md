@@ -30,7 +30,8 @@ A macOS menu bar app that monitors your Claude Code sessions, shows their status
 
 ```bash
 brew install ericermerimen/tap/agentping
-open $(brew --prefix)/AgentPing.app
+sudo cp -pR $(brew --prefix)/opt/agentping/AgentPing.app /Applications/
+open /Applications/AgentPing.app
 ```
 
 ### One-line install
@@ -120,6 +121,7 @@ AgentPing uses the macOS Accessibility API to focus terminal windows when you cl
 **Homebrew:**
 ```bash
 brew services stop agentping
+sudo rm -rf /Applications/AgentPing.app
 brew uninstall agentping
 ```
 
