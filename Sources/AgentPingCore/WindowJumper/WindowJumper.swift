@@ -18,11 +18,29 @@ public final class WindowJumper {
 
     /// Map normalized app names (from ProcessScanner) to bundle identifiers
     private static let appBundleIds: [String: [String]] = [
+        // VSCode family
         "vscode": ["com.microsoft.VSCode", "com.microsoft.VSCodeInsiders", "com.vscodium.VSCodium"],
+        // Electron-based editors
         "cursor": ["com.todesktop.230313mzl4w4u92"],
         "windsurf": ["com.codeium.windsurf"],
         "trae": ["com.trae.app"],
+        // Native editors
         "zed": ["dev.zed.Zed"],
+        "sublime": ["com.sublimetext.4", "com.sublimetext.3"],
+        "nova": ["com.panic.Nova"],
+        "emacs": ["org.gnu.Emacs"],
+        // JetBrains IDEs
+        "intellij": ["com.jetbrains.intellij", "com.jetbrains.intellij.ce"],
+        "webstorm": ["com.jetbrains.WebStorm"],
+        "pycharm": ["com.jetbrains.pycharm", "com.jetbrains.pycharm.ce"],
+        "goland": ["com.jetbrains.goland"],
+        "clion": ["com.jetbrains.CLion"],
+        "rider": ["com.jetbrains.rider"],
+        "phpstorm": ["com.jetbrains.PhpStorm"],
+        "rubymine": ["com.jetbrains.rubymine"],
+        "datagrip": ["com.jetbrains.datagrip"],
+        "fleet": ["fleet.app"],
+        // Terminals
         "ghostty": ["com.mitchellh.ghostty"],
         "terminal": ["com.apple.Terminal"],
         "iterm": ["com.googlecode.iterm2"],

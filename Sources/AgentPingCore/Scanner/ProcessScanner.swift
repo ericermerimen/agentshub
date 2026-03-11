@@ -19,16 +19,36 @@ public final class ProcessScanner {
     public init() {}
 
     public static let appNameMap: [String: String] = [
+        // VSCode family
         "Code Helper (Plugin)": "vscode",
         "Code Helper": "vscode",
         "Electron": "vscode",
+        // Cursor
         "Cursor Helper (Plugin)": "cursor",
         "Cursor Helper": "cursor",
+        // Windsurf (Codeium)
         "Windsurf Helper (Plugin)": "windsurf",
         "Windsurf Helper": "windsurf",
+        // Trae (ByteDance)
         "Trae Helper (Plugin)": "trae",
         "Trae Helper": "trae",
+        // Other editors
         "Zed": "zed",
+        "Sublime Text": "sublime",
+        "Nova": "nova",
+        "Emacs": "emacs",
+        // JetBrains IDEs
+        "idea": "intellij",
+        "webstorm": "webstorm",
+        "pycharm": "pycharm",
+        "goland": "goland",
+        "clion": "clion",
+        "rider": "rider",
+        "phpstorm": "phpstorm",
+        "rubymine": "rubymine",
+        "datagrip": "datagrip",
+        "fleet": "fleet",
+        // Terminals
         "Ghostty": "ghostty",
         "Terminal": "terminal",
         "iTerm2": "iterm",
