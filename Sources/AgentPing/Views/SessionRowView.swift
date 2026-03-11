@@ -101,6 +101,7 @@ struct SessionRowView: View {
                     .foregroundStyle(.tertiary)
             }
             } // end VStack trailing
+            .frame(width: 60, alignment: .trailing)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
