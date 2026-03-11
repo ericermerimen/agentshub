@@ -4,6 +4,8 @@ import AgentPingCore
 struct SessionHoverView: View {
     let session: Session
     @AppStorage("costTrackingEnabled") private var costTrackingEnabled = false
+    @State private var now = Date()
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -15,7 +17,7 @@ struct SessionHoverView: View {
 
                 Spacer()
 
-                Text(session.status.rawValue.capitalized)
+                Text(statusLabel)
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(statusColor)
                     .padding(.horizontal, 6)
@@ -30,7 +32,7 @@ struct SessionHoverView: View {
                 Text(task)
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
-                    .lineLimit(3)
+                    .lineLimit(6)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -57,6 +59,29 @@ struct SessionHoverView: View {
                         .font(.system(size: 10).monospacedDigit())
                         .foregroundStyle(.tertiary)
                 }
+            }
+
+            Divider().opacity(0.5)
+
+            // Duration + last activity
+            HStack {
+                Text("Started")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Text(relativeTime(from: session.startedAt))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+            }
+
+            HStack {
+                Text("Last activity")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Text(relativeTime(from: session.lastEventAt))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
             }
 
             // Cost
@@ -86,14 +111,37 @@ struct SessionHoverView: View {
                         .truncationMode(.middle)
                 }
             }
+
+            // Session ID
+            HStack {
+                Text("Session")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Text(session.id.prefix(12) + "...")
+                    .font(.system(size: 10).monospaced())
+                    .foregroundStyle(.quaternary)
+            }
         }
         .padding(12)
-        .frame(width: 260)
+        .frame(width: 280)
+        .onReceive(timer) { now = $0 }
     }
 
     private var modelLabel: String {
         let parts = [session.provider, session.model].compactMap { $0 }
         return parts.isEmpty ? "Unknown model" : parts.joined(separator: " ")
+    }
+
+    private var statusLabel: String {
+        switch session.status {
+        case .running:     return "Running"
+        case .needsInput:  return "Waiting"
+        case .idle:        return "Idle"
+        case .error:       return "Error"
+        case .done:        return "Done"
+        case .unavailable: return "Unavailable"
+        }
     }
 
     private var statusColor: Color {
@@ -105,6 +153,17 @@ struct SessionHoverView: View {
         case .done:       return Color(.systemGray)
         case .unavailable: return Color(.systemGray)
         }
+    }
+
+    private func relativeTime(from date: Date) -> String {
+        let seconds = max(0, Int(now.timeIntervalSince(date)))
+        if seconds < 60 { return "just now" }
+        let minutes = seconds / 60
+        if minutes < 60 { return "\(minutes)m ago" }
+        let hours = minutes / 60
+        if hours < 24 { return "\(hours)h \(minutes % 60)m ago" }
+        let days = hours / 24
+        return "\(days)d ago"
     }
 
     private func contextBarColor(_ pct: Double) -> Color {

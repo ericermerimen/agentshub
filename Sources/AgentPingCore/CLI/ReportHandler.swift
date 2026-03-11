@@ -97,7 +97,7 @@ public final class ReportHandler {
         }
 
         let result = lastAssistant ?? lastUser
-        return result.map { truncate($0, maxLength: 120) }
+        return result.map { truncate($0, maxLength: 300) }
     }
 
     /// Extract plain text from a transcript content value (string or array of blocks).
@@ -222,9 +222,12 @@ public final class ReportHandler {
 
     private static func truncate(_ text: String, maxLength: Int) -> String {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        // Take first line only
-        let firstLine = trimmed.components(separatedBy: .newlines).first ?? trimmed
-        if firstLine.count <= maxLength { return firstLine }
-        return String(firstLine.prefix(maxLength - 1)) + "..."
+        // Collapse multiple newlines into single space for compact display
+        let collapsed = trimmed.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        if collapsed.count <= maxLength { return collapsed }
+        return String(collapsed.prefix(maxLength - 1)) + "..."
     }
 }

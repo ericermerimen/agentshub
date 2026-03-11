@@ -51,14 +51,15 @@ public final class WindowJumper {
 
     /// Attempt to focus the window for a given session
     public func jumpTo(session: Session) -> Bool {
-        // Strategy 1: Use app name + pid if available (original path)
+        // Strategy 1: Use app name + cwd to find the right window
         if let appName = session.app {
             if let app = findRunningApp(named: appName) ?? findAppByPid(session.pid) {
                 app.activate()
-                if let pid = session.pid {
-                    raiseWindowForPid(pid, in: app)
-                } else if let cwd = session.cwd {
+                // Always prefer cwd matching -- crucial for multi-window editors like VSCode
+                if let cwd = session.cwd {
                     raiseWindowByCwd(cwd, in: app)
+                } else if let pid = session.pid {
+                    raiseWindowForPid(pid, in: app)
                 }
                 return true
             }
@@ -211,9 +212,9 @@ public final class WindowJumper {
         guard AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &windowsRef) == .success,
               let windows = windowsRef as? [AXUIElement] else { return }
 
+        // Raise the focused/main window as a fallback
         if let window = windows.first {
             AXUIElementPerformAction(window, kAXRaiseAction as CFString)
-            AXUIElementSetAttributeValue(window, kAXFocusedAttribute as CFString, true as CFTypeRef)
         }
     }
 }
