@@ -211,9 +211,11 @@ public final class ReportHandler {
             guard !line.isEmpty,
                   let lineData = line.data(using: .utf8),
                   let obj = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
-                  obj["type"] as? String == "assistant",
-                  let model = obj["model"] as? String else { continue }
-            return model
+                  obj["type"] as? String == "assistant" else { continue }
+            // Model can be at top level or nested in message
+            if let model = obj["model"] as? String { return model }
+            if let msg = obj["message"] as? [String: Any],
+               let model = msg["model"] as? String { return model }
         }
         return nil
     }
