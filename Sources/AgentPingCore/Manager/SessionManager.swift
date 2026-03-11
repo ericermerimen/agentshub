@@ -4,7 +4,7 @@ import Combine
 public final class SessionManager: ObservableObject {
     @Published public private(set) var sessions: [Session] = []
 
-    private let store: SessionStore
+    public let store: SessionStore
 
     public init(store: SessionStore? = nil) {
         self.store = store ?? SessionStore()

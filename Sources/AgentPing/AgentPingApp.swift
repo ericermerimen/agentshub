@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var scanTimer: Timer?
     var cancellables = Set<AnyCancellable>()
     var hotKeyRef: EventHotKeyRef?
+    var apiServer: APIServer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Create status bar item
@@ -61,6 +62,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Auto-purge old finished sessions on launch
         manager.autoPurgeOldSessions()
+
+        // Start API server
+        let port = UInt16(UserDefaults.standard.integer(forKey: "apiPort"))
+        apiServer = APIServer(store: manager.store, port: port > 0 ? port : 19199)
+        Task {
+            do {
+                try await apiServer?.start()
+            } catch {
+                // Server failed to start -- app continues with file-based IPC
+                print("API server failed to start: \(error)")
+            }
+        }
 
         // Register global hotkey: Cmd+Shift+A
         registerGlobalHotKey()
@@ -146,7 +159,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 360),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 440),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
