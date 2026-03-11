@@ -7,6 +7,8 @@ struct SessionRowView: View {
     @AppStorage("costTrackingEnabled") private var costTrackingEnabled = false
     @State private var now = Date()
     @State private var isHovered = false
+    @State private var showHover = false
+    @State private var hoverTask: DispatchWorkItem?
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var isAttention: Bool {
@@ -103,7 +105,20 @@ struct SessionRowView: View {
         .padding(.vertical, 8)
         .background(rowBackground)
         .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
+        .onHover { hovering in
+            isHovered = hovering
+            hoverTask?.cancel()
+            if hovering {
+                let task = DispatchWorkItem { showHover = true }
+                hoverTask = task
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: task)
+            } else {
+                showHover = false
+            }
+        }
+        .popover(isPresented: $showHover, arrowEdge: .trailing) {
+            SessionHoverView(session: session)
+        }
         .onReceive(timer) { now = $0 }
     }
 
