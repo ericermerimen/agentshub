@@ -24,9 +24,8 @@ public final class ReportHandler {
         // Store transcript path and extract task description
         if let transcriptPath {
             session.transcriptPath = transcriptPath
-            if session.taskDescription == nil {
-                session.taskDescription = Self.extractTaskDescription(from: transcriptPath)
-            }
+            // Always update to show the latest message
+            session.taskDescription = Self.extractLastMessage(from: transcriptPath) ?? session.taskDescription
             // Read real context % from Claude Code's status line data
             session.contextPercent = Self.readContextPercent(transcriptPath: transcriptPath)
         }
@@ -46,40 +45,68 @@ public final class ReportHandler {
         try store.write(session)
     }
 
-    /// Read the transcript JSONL and find the first user message to use as task description.
-    private static func extractTaskDescription(from path: String) -> String? {
-        // Only read the first 50KB to avoid loading huge transcripts
+    /// Read the end of the transcript JSONL and find the last meaningful message.
+    /// Prefers the last assistant text, falls back to the last user message.
+    private static func extractLastMessage(from path: String) -> String? {
         guard let fh = FileHandle(forReadingAtPath: path) else { return nil }
         defer { fh.closeFile() }
-        let chunk = fh.readData(ofLength: 50_000)
-        guard let content = String(data: chunk, encoding: .utf8) else { return nil }
 
-        for line in content.components(separatedBy: .newlines) {
+        // Read the last 100KB to find recent messages
+        let fileSize = fh.seekToEndOfFile()
+        let readSize: UInt64 = min(fileSize, 100_000)
+        fh.seek(toFileOffset: fileSize - readSize)
+        let data = fh.readDataToEndOfFile()
+        guard let content = String(data: data, encoding: .utf8) else { return nil }
+
+        var lastAssistant: String?
+        var lastUser: String?
+
+        let lines = content.components(separatedBy: .newlines).reversed()
+        for line in lines {
+            // Stop early once we have both
+            if lastAssistant != nil && lastUser != nil { break }
+
             guard !line.isEmpty,
                   let lineData = line.data(using: .utf8),
                   let obj = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any] else { continue }
 
-            // Claude Code transcript uses "type": "user" for human messages
             let type = obj["type"] as? String
             let role = obj["role"] as? String
-            guard type == "user" || role == "human" || role == "user" else { continue }
 
-            // Content can be at top level or inside "message"
+            let isAssistant = type == "assistant" || role == "assistant"
+            let isUser = type == "user" || role == "human" || role == "user"
+
+            guard isAssistant || isUser else { continue }
+
             let contentVal = obj["content"] ?? (obj["message"] as? [String: Any])?["content"]
+            let text = extractText(from: contentVal)
+            guard let text, !text.isEmpty else { continue }
 
-            if let text = contentVal as? String {
+            if isAssistant && lastAssistant == nil {
+                lastAssistant = text
+            } else if isUser && lastUser == nil {
+                lastUser = text
+            }
+        }
+
+        let result = lastAssistant ?? lastUser
+        return result.map { truncate($0, maxLength: 120) }
+    }
+
+    /// Extract plain text from a transcript content value (string or array of blocks).
+    private static func extractText(from contentVal: Any?) -> String? {
+        if let text = contentVal as? String {
+            let cleaned = stripTags(text)
+            return cleaned.isEmpty ? nil : cleaned
+        }
+        if let blocks = contentVal as? [[String: Any]] {
+            let texts = blocks.compactMap { block -> String? in
+                guard block["type"] as? String == "text",
+                      let text = block["text"] as? String else { return nil }
                 let cleaned = stripTags(text)
-                if !cleaned.isEmpty { return truncate(cleaned, maxLength: 80) }
+                return cleaned.isEmpty ? nil : cleaned
             }
-            if let blocks = contentVal as? [[String: Any]] {
-                for block in blocks {
-                    if block["type"] as? String == "text",
-                       let text = block["text"] as? String {
-                        let cleaned = stripTags(text)
-                        if !cleaned.isEmpty { return truncate(cleaned, maxLength: 80) }
-                    }
-                }
-            }
+            return texts.first
         }
         return nil
     }
