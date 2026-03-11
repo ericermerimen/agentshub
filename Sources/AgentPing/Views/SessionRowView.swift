@@ -3,6 +3,7 @@ import AgentPingCore
 
 struct SessionRowView: View {
     let session: Session
+    var onTap: (() -> Void)?
 
     @AppStorage("costTrackingEnabled") private var costTrackingEnabled = false
     @State private var now = Date()
@@ -115,6 +116,11 @@ struct SessionRowView: View {
             } else {
                 showHover = false
             }
+        }
+        .onTapGesture {
+            hoverTask?.cancel()
+            showHover = false
+            onTap?()
         }
         .popover(isPresented: $showHover, arrowEdge: .trailing) {
             SessionHoverView(session: session)

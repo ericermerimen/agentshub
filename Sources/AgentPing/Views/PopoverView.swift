@@ -294,8 +294,7 @@ struct PopoverView: View {
 
     private func sessionRow(_ session: Session) -> some View {
         VStack(spacing: 0) {
-            SessionRowView(session: session)
-                .onTapGesture { jumpToWindow(session: session) }
+            SessionRowView(session: session, onTap: { jumpToWindow(session: session) })
                 .contextMenu { sessionContextMenu(session: session) }
         }
     }
