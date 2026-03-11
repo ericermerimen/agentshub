@@ -148,7 +148,7 @@ To enable automatic Homebrew tap updates, add a `TAP_TOKEN` secret to your repo 
 ```
 Sources/
 ├── AgentPing/           # macOS menu bar app (SwiftUI + AppKit)
-│   ├── AgentsHubApp.swift
+│   ├── AgentPingApp.swift
 │   ├── Views/
 │   │   ├── PopoverView.swift
 │   │   ├── SessionRowView.swift
