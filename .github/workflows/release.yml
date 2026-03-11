@@ -97,15 +97,21 @@ jobs:
             end
 
             def post_install
-              ohai "Linking AgentPing.app to /Applications..."
-              system "ln", "-sf", "#{prefix}/AgentPing.app", "#{ENV["HOME"]}/Applications/AgentPing.app" if Dir.exist?("#{ENV["HOME"]}/Applications")
+              ohai "Installing AgentPing.app to /Applications..."
+              target = Pathname("/Applications/AgentPing.app")
+              begin
+                target.rmtree if target.exist?
+                FileUtils.cp_r "#{prefix}/AgentPing.app", "/Applications/"
+                ohai "AgentPing.app installed to /Applications/"
+                ohai "Relaunch AgentPing to use the new version."
+              rescue Errno::EACCES
+                opoo "Could not copy to /Applications/ (permission denied)."
+                opoo "Run: sudo cp -pR #{opt_prefix}/AgentPing.app /Applications/"
+              end
             end
 
             def caveats
               <<~EOS
-                To add AgentPing to /Applications, run:
-                  sudo cp -pR #{opt_prefix}/AgentPing.app /Applications/
-
                 To set up Claude Code hooks, open AgentPing preferences
                 and click "Copy Hook Config to Clipboard", then paste
                 into ~/.claude/settings.json
