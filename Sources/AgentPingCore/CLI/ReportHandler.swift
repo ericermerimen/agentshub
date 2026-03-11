@@ -28,6 +28,13 @@ public final class ReportHandler {
             session.taskDescription = Self.extractLastMessage(from: transcriptPath) ?? session.taskDescription
             // Read real context % from Claude Code's status line data
             session.contextPercent = Self.readContextPercent(transcriptPath: transcriptPath)
+            // Extract provider and model from transcript
+            if session.provider == nil || session.model == nil,
+               let modelId = Self.readModelFromTranscript(transcriptPath) {
+                let (provider, model) = Self.humanizeModelName(modelId)
+                session.provider = provider
+                session.model = model
+            }
         }
 
         // Map event to status
@@ -158,6 +165,55 @@ public final class ReportHandler {
                 // Claude Opus context window: 200K tokens
                 return min(Double(totalInput) / 200_000.0, 1.0)
             }
+        }
+        return nil
+    }
+
+    /// Parse a Claude model ID into (provider, displayName).
+    /// e.g. "claude-opus-4-6" -> ("Claude", "Opus 4.6")
+    /// e.g. "claude-haiku-4-5-20251001" -> ("Claude", "Haiku 4.5")
+    public static func humanizeModelName(_ modelId: String) -> (provider: String, model: String) {
+        guard modelId.hasPrefix("claude-") else {
+            return ("Unknown", modelId)
+        }
+        // Strip "claude-" prefix
+        let rest = String(modelId.dropFirst(7)) // drop "claude-"
+        // Known families: opus, sonnet, haiku
+        for family in ["opus", "sonnet", "haiku"] {
+            guard rest.hasPrefix(family) else { continue }
+            let afterFamily = String(rest.dropFirst(family.count))
+            // afterFamily is like "-4-6" or "-4-5-20251001"
+            let parts = afterFamily.split(separator: "-").compactMap { Int($0) }
+            // Take first two numeric parts as major.minor version
+            if parts.count >= 2 {
+                return ("Claude", "\(family.capitalized) \(parts[0]).\(parts[1])")
+            } else if parts.count == 1 {
+                return ("Claude", "\(family.capitalized) \(parts[0])")
+            }
+            return ("Claude", family.capitalized)
+        }
+        return ("Claude", rest)
+    }
+
+    /// Extract the model ID from the last assistant message in a Claude transcript.
+    private static func readModelFromTranscript(_ path: String) -> String? {
+        guard let fh = FileHandle(forReadingAtPath: path) else { return nil }
+        defer { fh.closeFile() }
+
+        let fileSize = fh.seekToEndOfFile()
+        let readSize: UInt64 = min(fileSize, 100_000)
+        fh.seek(toFileOffset: fileSize - readSize)
+        let data = fh.readDataToEndOfFile()
+        guard let content = String(data: data, encoding: .utf8) else { return nil }
+
+        let lines = content.components(separatedBy: .newlines).reversed()
+        for line in lines {
+            guard !line.isEmpty,
+                  let lineData = line.data(using: .utf8),
+                  let obj = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
+                  obj["type"] as? String == "assistant",
+                  let model = obj["model"] as? String else { continue }
+            return model
         }
         return nil
     }
