@@ -54,7 +54,7 @@ public final class ReportHandler {
 
     /// Read the end of the transcript JSONL and find the last meaningful message.
     /// Prefers the last assistant text, falls back to the last user message.
-    private static func extractLastMessage(from path: String) -> String? {
+    public static func extractLastMessage(from path: String) -> String? {
         guard let fh = FileHandle(forReadingAtPath: path) else { return nil }
         defer { fh.closeFile() }
 
@@ -135,7 +135,7 @@ public final class ReportHandler {
     /// Read real context usage from the last assistant message's token counts.
     /// Claude's context window is 200K tokens. The usage.cache_read_input_tokens + input_tokens
     /// gives the actual tokens used.
-    private static func readContextPercent(transcriptPath: String) -> Double? {
+    public static func readContextPercent(transcriptPath: String) -> Double? {
         // Read last 100KB of transcript to find the most recent assistant message with usage
         guard let fh = FileHandle(forReadingAtPath: transcriptPath) else { return nil }
         defer { fh.closeFile() }
@@ -196,7 +196,7 @@ public final class ReportHandler {
     }
 
     /// Extract the model ID from the last assistant message in a Claude transcript.
-    private static func readModelFromTranscript(_ path: String) -> String? {
+    public static func readModelFromTranscript(_ path: String) -> String? {
         guard let fh = FileHandle(forReadingAtPath: path) else { return nil }
         defer { fh.closeFile() }
 

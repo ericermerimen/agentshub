@@ -33,14 +33,31 @@ final class HTTPParserTests: XCTestCase {
 
     func testParseIncompleteHeaders() {
         let raw = "GET /v1/sessions HTTP/1.1\r\nHost: local"
-        // No \r\n\r\n terminator -- should return nil (incomplete)
-        XCTAssertNil(HTTPRequestParser.parseIfComplete(Data(raw.utf8)))
+        // No \r\n\r\n terminator -- should be incomplete
+        if case .incomplete = HTTPRequestParser.parseIfComplete(Data(raw.utf8)) {
+            // expected
+        } else {
+            XCTFail("Expected .incomplete")
+        }
     }
 
     func testParseIncompleteBody() {
         let raw = "POST /v1/report HTTP/1.1\r\nContent-Length: 100\r\n\r\nshort"
-        // Body shorter than Content-Length -- should return nil (incomplete)
-        XCTAssertNil(HTTPRequestParser.parseIfComplete(Data(raw.utf8)))
+        // Body shorter than Content-Length -- should be incomplete
+        if case .incomplete = HTTPRequestParser.parseIfComplete(Data(raw.utf8)) {
+            // expected
+        } else {
+            XCTFail("Expected .incomplete")
+        }
+    }
+
+    func testParseIfCompleteReturnsMalformedForBadMethod() {
+        let raw = "GARBAGE /path HTTP/1.1\r\n\r\n"
+        if case .invalid = HTTPRequestParser.parseIfComplete(Data(raw.utf8)) {
+            // expected -- should not silently return incomplete
+        } else {
+            XCTFail("Expected .invalid for malformed request")
+        }
     }
 
     func testFormatResponse200() {

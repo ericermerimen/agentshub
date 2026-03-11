@@ -3,6 +3,7 @@ import Foundation
 public final class APIRouter {
     private let store: SessionStore
     private let version: String
+    public var port: UInt16 = 0
 
     public init(store: SessionStore, version: String = "0.6.0") {
         self.store = store
@@ -51,7 +52,7 @@ public final class APIRouter {
     // MARK: - Handlers
 
     private func handleHealth() -> HTTPResponse {
-        return .json(200, "OK", ["status": "ok", "version": version])
+        return .json(200, "OK", ["status": "ok", "version": version, "port": port])
     }
 
     private func handleReport(_ request: HTTPRequest) -> HTTPResponse {
@@ -82,7 +83,21 @@ public final class APIRouter {
             }
             if let file = json["file"] as? String { session.file = file }
             if let app = json["app"] as? String { session.app = app }
-            if let transcriptPath = json["transcript_path"] as? String { session.transcriptPath = transcriptPath }
+            if let transcriptPath = json["transcript_path"] as? String {
+                session.transcriptPath = transcriptPath
+                // Extract task description and context % from transcript (same as ReportHandler)
+                if let taskDesc = ReportHandler.extractLastMessage(from: transcriptPath) {
+                    session.taskDescription = taskDesc
+                }
+                session.contextPercent = ReportHandler.readContextPercent(transcriptPath: transcriptPath)
+                // Auto-extract provider/model from Claude transcripts
+                if session.provider == nil, session.model == nil,
+                   let modelId = ReportHandler.readModelFromTranscript(transcriptPath) {
+                    let (provider, model) = ReportHandler.humanizeModelName(modelId)
+                    session.provider = provider
+                    session.model = model
+                }
+            }
             if let provider = json["provider"] as? String { session.provider = provider }
             if let model = json["model"] as? String { session.model = model }
             if let pid = json["pid"] as? Int { session.pid = pid }

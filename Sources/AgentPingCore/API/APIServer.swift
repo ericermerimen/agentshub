@@ -44,6 +44,7 @@ public final class APIServer {
                 case .ready:
                     if let port = listener.port {
                         self?.actualPort = port.rawValue
+                        self?.router.port = port.rawValue
                         self?.writePortFile()
                     }
                     continuation.resume()
@@ -66,45 +67,55 @@ public final class APIServer {
     private func handleConnection(_ connection: NWConnection) {
         connection.start(queue: queue)
 
-        var buffer = Data()
-        receiveData(connection: connection, buffer: &buffer)
+        // 5s timeout: cancel connection if no complete request arrives
+        let timeout = DispatchWorkItem { [weak connection] in
+            connection?.cancel()
+        }
+        queue.asyncAfter(deadline: .now() + 5.0, execute: timeout)
+
+        receiveData(connection: connection, buffer: Data(), timeout: timeout)
     }
 
-    private func receiveData(connection: NWConnection, buffer: inout Data) {
-        var buffer = buffer
+    private func receiveData(connection: NWConnection, buffer: Data, timeout: DispatchWorkItem) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, _, isComplete, error in
             guard let self else {
                 connection.cancel()
                 return
             }
 
+            var buffer = buffer
             if let data {
                 buffer.append(data)
             }
 
             // Check for oversized request
             if buffer.count > 1_048_576 + 8192 {
+                timeout.cancel()
                 let response = HTTPResponse.error(413, "Payload Too Large", "Request too large")
                 self.send(response, on: connection)
                 return
             }
 
             // Try to parse the complete request
-            if let request = HTTPRequestParser.parseIfComplete(buffer) {
+            switch HTTPRequestParser.parseIfComplete(buffer) {
+            case .complete(let request):
+                timeout.cancel()
                 let response = self.router.handle(request)
                 self.send(response, on: connection)
-                return
-            }
-
-            // If connection is complete but we couldn't parse, it's malformed
-            if isComplete || error != nil {
-                let response = HTTPResponse.error(400, "Bad Request", "Malformed HTTP request")
+            case .incomplete:
+                if isComplete || error != nil {
+                    timeout.cancel()
+                    let response = HTTPResponse.error(400, "Bad Request", "Malformed HTTP request")
+                    self.send(response, on: connection)
+                } else {
+                    self.receiveData(connection: connection, buffer: buffer, timeout: timeout)
+                }
+            case .invalid(let parseError):
+                timeout.cancel()
+                let message = (parseError as? HTTPParseError)?.description ?? "Malformed HTTP request"
+                let response = HTTPResponse.error(400, "Bad Request", message)
                 self.send(response, on: connection)
-                return
             }
-
-            // Otherwise, keep reading
-            self.receiveData(connection: connection, buffer: &buffer)
         }
     }
 

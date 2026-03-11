@@ -49,10 +49,24 @@ public struct HTTPResponse {
     public static let methodNotAllowed = error(405, "Method Not Allowed", "Method not allowed")
 }
 
-public enum HTTPParseError: Error {
+public enum HTTPParseError: Error, CustomStringConvertible {
     case malformedRequestLine
     case unknownMethod(String)
     case headersTooLarge
+
+    public var description: String {
+        switch self {
+        case .malformedRequestLine: return "Malformed request line"
+        case .unknownMethod(let m): return "Unknown HTTP method: \(m)"
+        case .headersTooLarge: return "Headers exceed 8KB limit"
+        }
+    }
+}
+
+public enum HTTPParseResult {
+    case complete(HTTPRequest)
+    case incomplete
+    case invalid(Error)
 }
 
 public enum HTTPRequestParser {
@@ -68,9 +82,17 @@ public enum HTTPRequestParser {
         return request
     }
 
-    /// Parse if the data contains a complete HTTP request. Returns nil if incomplete.
-    public static func parseIfComplete(_ data: Data) -> HTTPRequest? {
-        return try? parseInternal(data, allowIncomplete: true)
+    /// Parse if the data contains a complete HTTP request.
+    /// Returns .complete, .incomplete, or .invalid with the parse error.
+    public static func parseIfComplete(_ data: Data) -> HTTPParseResult {
+        do {
+            if let request = try parseInternal(data, allowIncomplete: true) {
+                return .complete(request)
+            }
+            return .incomplete
+        } catch {
+            return .invalid(error)
+        }
     }
 
     private static func parseInternal(_ data: Data, allowIncomplete: Bool = false) throws -> HTTPRequest? {
