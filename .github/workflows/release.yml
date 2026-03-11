@@ -99,22 +99,9 @@ jobs:
 
             def post_install
               user_apps = Pathname(Dir.home)/"Applications"
-              user_apps.mkpath
-              target = user_apps/"AgentPing.app"
-              target.rmtree if target.exist?
-              FileUtils.cp_r "#{prefix}/AgentPing.app", target.to_s
-              ohai "AgentPing.app installed to #{user_apps}/"
-
-              # Clean up old /Applications copy if it exists
-              system_target = Pathname("/Applications/AgentPing.app")
-              if system_target.exist?
-                begin
-                  system_target.rmtree
-                  ohai "Removed old copy from /Applications/"
-                rescue Errno::EACCES
-                  opoo "Old AgentPing.app in /Applications/ can be removed with: sudo rm -rf /Applications/AgentPing.app"
-                end
-              end
+              system "mkdir", "-p", user_apps.to_s
+              system "rm", "-rf", (user_apps/"AgentPing.app").to_s
+              system "cp", "-pR", "#{prefix}/AgentPing.app", user_apps.to_s
             end
 
             def caveats
