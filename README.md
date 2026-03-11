@@ -33,9 +33,13 @@ A macOS menu bar app that monitors your Claude Code sessions, shows their status
 
 ```bash
 brew install ericermerimen/tap/agentping
-sudo cp -pR $(brew --prefix)/opt/agentping/AgentPing.app /Applications/
-open /Applications/AgentPing.app
+open $(brew --prefix)/opt/agentping/AgentPing.app
 ```
+
+> **Tip:** To add AgentPing to Spotlight and Launchpad, run:
+> ```bash
+> mkdir -p ~/Applications && cp -pR $(brew --prefix)/opt/agentping/AgentPing.app ~/Applications/
+> ```
 
 ### One-line install
 
@@ -43,7 +47,7 @@ Downloads the pre-built `.app` from GitHub Releases. No Xcode required:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ericermerimen/agentping/main/Scripts/install-remote.sh | bash
-open /Applications/AgentPing.app
+open ~/Applications/AgentPing.app
 ```
 
 ### Manual download
@@ -54,8 +58,9 @@ open /Applications/AgentPing.app
 
 ```bash
 tar xzf AgentPing-*.tar.gz
-cp -r AgentPing.app /Applications/
-ln -sf /Applications/AgentPing.app/Contents/MacOS/agentping /usr/local/bin/agentping
+mkdir -p ~/Applications
+cp -r AgentPing.app ~/Applications/
+open ~/Applications/AgentPing.app
 ```
 
 ### Build from source
@@ -67,6 +72,13 @@ git clone https://github.com/ericermerimen/agentping.git
 cd agentping
 ./Scripts/install.sh
 ```
+
+## After install
+
+1. **Grant Accessibility access** when prompted (System Settings > Privacy & Security > Accessibility)
+2. Open AgentPing **Preferences** > click **"Copy Hook Config to Clipboard"**
+3. Paste into `~/.claude/settings.json`
+4. Restart your Claude Code sessions -- AgentPing will start tracking them
 
 ## CLI Usage
 
@@ -149,8 +161,8 @@ AgentPing uses the macOS Accessibility API to focus terminal windows when you cl
 **Homebrew:**
 ```bash
 brew services stop agentping
-sudo rm -rf /Applications/AgentPing.app
 brew uninstall agentping
+rm -rf ~/Applications/AgentPing.app
 ```
 
 **Manual:**
