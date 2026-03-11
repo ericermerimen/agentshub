@@ -96,12 +96,13 @@ jobs:
             end
 
             def post_install
-              ln_sf prefix/"AgentPing.app", "/Applications/AgentPing.app"
+              system "rm", "-rf", "/Applications/AgentPing.app"
+              system "cp", "-pR", "#{prefix}/AgentPing.app", "/Applications/AgentPing.app"
             end
 
             def caveats
               <<~EOS
-                AgentPing.app has been linked to /Applications.
+                AgentPing.app has been copied to /Applications.
 
                 To set up Claude Code hooks, open AgentPing preferences
                 and click "Copy Hook Config to Clipboard", then paste
