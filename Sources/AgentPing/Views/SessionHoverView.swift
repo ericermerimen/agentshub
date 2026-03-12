@@ -87,11 +87,11 @@ struct SessionHoverView: View {
             // Cost
             if costTrackingEnabled, let cost = session.costUsd, cost > 0 {
                 HStack {
-                    Text("Cost")
+                    Text("Cost (est.)")
                         .font(.system(size: 10))
                         .foregroundStyle(.tertiary)
                     Spacer()
-                    Text(String(format: "$%.2f", cost))
+                    Text(String(format: "~$%.2f", cost))
                         .font(.system(size: 10).monospacedDigit())
                         .foregroundStyle(.secondary)
                 }

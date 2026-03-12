@@ -372,11 +372,11 @@ struct PopoverView: View {
 
     private var costFooter: some View {
         HStack {
-            Text("Total cost")
+            Text("Total cost (est.)")
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
             Spacer()
-            Text(String(format: "$%.2f", manager.totalCost))
+            Text(String(format: "~$%.2f", manager.totalCost))
                 .font(.system(size: 10).monospacedDigit())
                 .foregroundStyle(.secondary)
         }

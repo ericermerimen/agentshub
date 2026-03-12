@@ -74,7 +74,7 @@ struct SessionRowView: View {
 
             VStack(alignment: .trailing, spacing: 2) {
             if costTrackingEnabled, let cost = session.costUsd, cost > 0 {
-                Text(String(format: "$%.2f", cost))
+                Text(String(format: "~$%.2f", cost))
                     .font(.system(size: 9).monospacedDigit())
                     .foregroundStyle(.quaternary)
             }

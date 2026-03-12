@@ -37,7 +37,7 @@ struct PreferencesView: View {
             }
 
             Section("Data") {
-                Toggle("Show cost per session", isOn: $costTrackingEnabled)
+                Toggle("Show estimated cost per session", isOn: $costTrackingEnabled)
                 Text("Finished sessions older than 24 hours are automatically removed.")
                     .font(.caption)
                     .foregroundStyle(.secondary)

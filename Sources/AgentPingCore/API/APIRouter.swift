@@ -105,10 +105,15 @@ public final class APIRouter {
                     session.provider = provider
                     session.model = model
                 }
+                // Calculate cost from token usage (unless explicit cost_usd is provided)
+                if json["cost_usd"] == nil {
+                    session.costUsd = ReportHandler.readCostFromTranscript(transcriptPath) ?? session.costUsd
+                }
             }
             if let provider = json["provider"] as? String { session.provider = provider }
             if let model = json["model"] as? String { session.model = model }
             if let pid = json["pid"] as? Int { session.pid = pid }
+            if let costUsd = json["cost_usd"] as? Double { session.costUsd = costUsd }
 
             // Map event to status
             switch event {
