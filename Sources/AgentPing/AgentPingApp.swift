@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var preferencesWindow: NSWindow?
     var watcher: DirectoryWatcher?
     var scanTimer: Timer?
+    var syncTimer: Timer?
     var cancellables = Set<AnyCancellable>()
     var hotKeyRef: EventHotKeyRef?
     var apiServer: APIServer?
@@ -78,8 +79,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Register global hotkey: Cmd+Shift+A
         registerGlobalHotKey()
 
-        // Start periodic scan
+        // Initial sync + start periodic timers
+        manager.sync()
         startPeriodicScan()
+        startPeriodicSync()
 
         // Auto-check for updates on launch
         if UserDefaults.standard.object(forKey: "checkForUpdatesAutomatically") == nil {
@@ -94,7 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateIcon(sessions: [Session]) {
         guard let button = statusItem.button else { return }
-        let attentionCount = sessions.filter { $0.status == .needsInput || $0.status == .idle }.count
+        let attentionCount = sessions.filter { $0.status == .needsInput || $0.status == .error }.count
         let symbolName = attentionCount > 0 ? "circle.grid.2x2.fill" : "circle.grid.2x2"
         button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "AgentPing")
         button.title = attentionCount > 0 ? " \(attentionCount)" : ""
@@ -159,6 +162,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func startPeriodicSync() {
+        syncTimer?.invalidate()
+        syncTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+            self?.manager.sync()
+        }
+    }
+
     private func openPreferences() {
         popover.performClose(nil)
 
@@ -174,7 +184,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "Settings"
+        window.title = ""
+        window.toolbarStyle = .preference
         window.contentViewController = NSHostingController(rootView: PreferencesView(manager: manager))
         window.center()
         window.isReleasedWhenClosed = false

@@ -3,21 +3,72 @@ import AppKit
 import ServiceManagement
 import AgentPingCore
 
+enum PreferencesTab: Int, CaseIterable {
+    case general = 0
+    case integrations = 1
+    case about = 2
+
+    var title: String {
+        switch self {
+        case .general: return "General"
+        case .integrations: return "Integrations"
+        case .about: return "About"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .general: return "gearshape"
+        case .integrations: return "link"
+        case .about: return "info.circle"
+        }
+    }
+}
+
 struct PreferencesView: View {
     @ObservedObject var manager: SessionManager
-    @State private var selectedTab = 0
+    @State private var selectedTab: PreferencesTab = .general
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            GeneralTab()
-                .tabItem { Label("General", systemImage: "gearshape") }
-                .tag(0)
-            IntegrationsTab()
-                .tabItem { Label("Integrations", systemImage: "link") }
-                .tag(1)
-            AboutTab(manager: manager)
-                .tabItem { Label("About", systemImage: "info.circle") }
-                .tag(2)
+        VStack(spacing: 0) {
+            // Toolbar-style tab bar
+            HStack(spacing: 0) {
+                ForEach(PreferencesTab.allCases, id: \.self) { tab in
+                    Button {
+                        selectedTab = tab
+                    } label: {
+                        VStack(spacing: 3) {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 18))
+                            Text(tab.title)
+                                .font(.system(size: 10))
+                        }
+                        .foregroundStyle(selectedTab == tab ? .primary : .secondary)
+                        .frame(width: 72, height: 48)
+                        .contentShape(Rectangle())
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(selectedTab == tab ? Color.primary.opacity(0.08) : Color.clear)
+                                .padding(2)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.top, 4)
+            .padding(.bottom, 2)
+
+            Divider()
+
+            // Tab content
+            switch selectedTab {
+            case .general:
+                GeneralTab()
+            case .integrations:
+                IntegrationsTab()
+            case .about:
+                AboutTab(manager: manager)
+            }
         }
         .frame(width: 400, height: 540)
     }

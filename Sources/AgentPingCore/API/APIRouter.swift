@@ -115,14 +115,7 @@ public final class APIRouter {
             if let pid = json["pid"] as? Int { session.pid = pid }
             if let costUsd = json["cost_usd"] as? Double { session.costUsd = costUsd }
 
-            // Map event to status
-            switch event {
-            case "tool-use":    session.status = .running
-            case "needs-input": session.status = .needsInput
-            case "stopped":     session.status = .idle
-            case "error":       session.status = .error
-            default:            session.status = .running
-            }
+            session.status = SessionStatus.from(event: event, current: session.status)
 
             session.lastEventAt = Date()
             try store.write(session)

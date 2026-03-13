@@ -80,7 +80,7 @@ struct SessionRowView: View {
             }
 
             if session.status == .needsInput {
-                Text("Waiting")
+                Text("Reply")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Color(.systemOrange))
             } else if session.status == .idle {
@@ -92,9 +92,9 @@ struct SessionRowView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Color(.systemRed))
             } else if session.status == .running {
-                Text(elapsedTime)
-                    .font(.system(size: 11).monospacedDigit())
-                    .foregroundStyle(.tertiary)
+                Text("Running")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(.systemGreen).opacity(0.8))
             } else {
                 Text(statusLabel)
                     .font(.system(size: 11))
@@ -232,14 +232,6 @@ struct SessionRowView: View {
         case .idle:  return "Idle"
         default:     return ""
         }
-    }
-
-    private var elapsedTime: String {
-        let total = max(0, Int(now.timeIntervalSince(session.lastEventAt)))
-        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
-        return h > 0
-            ? String(format: "%d:%02d:%02d", h, m, s)
-            : String(format: "%02d:%02d", m, s)
     }
 
     private var idleElapsed: String {

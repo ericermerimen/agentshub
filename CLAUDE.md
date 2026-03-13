@@ -36,7 +36,7 @@ Sources/
     ├── Models/Session.swift           # Session data model + JSON codable
     ├── Store/SessionStore.swift       # File-based JSON persistence (~/.agentping/sessions/)
     ├── Manager/SessionManager.swift   # Session lifecycle, sync, auto-purge
-    ├── Scanner/ProcessScanner.swift   # Detects running Claude processes via ps
+    ├── Scanner/ProcessScanner.swift   # Detects running Claude processes via ps (used for initial scan/app detection)
     ├── Watcher/DirectoryWatcher.swift # FSEvents watcher for live updates
     ├── WindowJumper/WindowJumper.swift # Accessibility API window focus
     ├── CLI/ReportHandler.swift        # Processes hook events, reads transcripts

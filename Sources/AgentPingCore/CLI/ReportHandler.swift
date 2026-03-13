@@ -39,16 +39,9 @@ public final class ReportHandler {
             session.costUsd = Self.readCostFromTranscript(transcriptPath) ?? session.costUsd
         }
 
-        // Map event to status
         // "stopped" = Claude finished its turn, waiting for user's next message = idle
         // Only sync/process-exit marks a session as truly "done"
-        switch event {
-        case "tool-use":    session.status = .running
-        case "needs-input": session.status = .needsInput
-        case "stopped":     session.status = .idle
-        case "error":       session.status = .error
-        default:            session.status = .running
-        }
+        session.status = SessionStatus.from(event: event, current: session.status)
 
         session.lastEventAt = Date()
         try store.write(session)

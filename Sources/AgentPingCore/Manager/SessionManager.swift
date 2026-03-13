@@ -3,6 +3,7 @@ import Combine
 
 public final class SessionManager: ObservableObject {
     @Published public private(set) var sessions: [Session] = []
+    @Published public private(set) var lastSyncAt: Date?
 
     public let store: SessionStore
 
@@ -37,8 +38,6 @@ public final class SessionManager: ObservableObject {
 
     /// Sync: validate each active session is still alive, mark stale ones as done.
     public func sync() {
-        let activePids = Self.runningClaudePids()
-
         do {
             var allSessions = try store.listAll()
             var changed = false
@@ -47,13 +46,10 @@ public final class SessionManager: ObservableObject {
                 let s = allSessions[i]
                 guard [.running, .needsInput, .idle].contains(s.status) else { continue }
 
-                // Check 1: if session has a transcript path, check the file's mtime
-                // Check 2: if no event in 5+ minutes and no matching Claude process, mark done
                 let staleness = Date().timeIntervalSince(s.lastEventAt)
 
                 if staleness > 300 { // 5 minutes with no event
-                    // Check if any Claude process is still associated
-                    let hasProcess = s.pid.map { activePids.contains($0) } ?? false
+                    let hasProcess = s.pid.map { Self.isProcessAlive($0) } ?? false
 
                     if !hasProcess {
                         allSessions[i].status = .done
@@ -64,43 +60,19 @@ public final class SessionManager: ObservableObject {
             }
 
             if changed {
-                reload()
-            } else {
                 sessions = allSessions.sorted { $0.lastEventAt > $1.lastEventAt }
             }
+            lastSyncAt = Date()
         } catch {
             sessions = []
         }
     }
 
-    /// Find PIDs of running claude/Claude Code processes.
-    private static func runningClaudePids() -> Set<Int> {
-        var pids = Set<Int>()
-        let pipe = Pipe()
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/ps")
-        process.arguments = ["-eo", "pid,comm"]
-        process.standardOutput = pipe
-        process.standardError = FileHandle.nullDevice
-
-        do {
-            try process.run()
-            process.waitUntilExit()
-            let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            if let output = String(data: data, encoding: .utf8) {
-                for line in output.components(separatedBy: .newlines) {
-                    let trimmed = line.trimmingCharacters(in: .whitespaces)
-                    if trimmed.lowercased().contains("claude") {
-                        let parts = trimmed.split(separator: " ", maxSplits: 1)
-                        if let pidStr = parts.first, let pid = Int(pidStr) {
-                            pids.insert(pid)
-                        }
-                    }
-                }
-            }
-        } catch {}
-
-        return pids
+    /// Check if a process is still alive using kill(pid, 0) syscall.
+    /// This is ~1000x cheaper than spawning a `ps` subprocess.
+    private static func isProcessAlive(_ pid: Int) -> Bool {
+        guard pid > 0 else { return false }
+        return Darwin.kill(Int32(pid), 0) == 0
     }
 
     public func clearUnavailable() {

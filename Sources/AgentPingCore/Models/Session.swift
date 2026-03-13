@@ -7,6 +7,18 @@ public enum SessionStatus: String, Codable, CaseIterable {
     case done
     case error
     case unavailable
+
+    /// Map a hook event name to a session status.
+    /// "stopped" won't downgrade "needs-input" because both hooks fire and Stop comes last.
+    public static func from(event: String, current: SessionStatus) -> SessionStatus {
+        switch event {
+        case "tool-use":    return .running
+        case "needs-input": return .needsInput
+        case "stopped":     return current == .needsInput ? .needsInput : .idle
+        case "error":       return .error
+        default:            return .running
+        }
+    }
 }
 
 public struct Session: Codable, Identifiable, Equatable {

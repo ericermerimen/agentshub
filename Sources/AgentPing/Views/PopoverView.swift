@@ -14,9 +14,20 @@ struct PopoverView: View {
     @State private var selectedTab: SessionTab = .active
     @State private var searchText = ""
     @State private var showSearch = false
+    @State private var now = Date()
 
     private var attentionCount: Int {
         manager.sessions.filter { $0.status == .needsInput || $0.status == .error }.count
+    }
+
+    private var syncTooltip: String {
+        guard let lastSync = manager.lastSyncAt else { return "Sync sessions" }
+        let seconds = Int(now.timeIntervalSince(lastSync))
+        if seconds < 5 { return "Synced just now" }
+        if seconds < 60 { return "Synced \(seconds)s ago" }
+        let minutes = seconds / 60
+        if minutes == 1 { return "Synced 1 min ago" }
+        return "Synced \(minutes) min ago"
     }
 
     var body: some View {
@@ -33,12 +44,11 @@ struct PopoverView: View {
             Divider().opacity(0.3)
             sessionList
 
-            if costTrackingEnabled && manager.totalCost > 0 {
-                Divider().opacity(0.3)
-                costFooter
-            }
+            Divider().opacity(0.3)
+            footer
         }
         .frame(width: 340, height: 460)
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { now = $0 }
     }
 
     // MARK: - Header
@@ -83,7 +93,7 @@ struct PopoverView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Sync sessions")
+            .help(syncTooltip)
 
             Button { openPreferences?() } label: {
                 Image(systemName: "gearshape")
@@ -368,17 +378,24 @@ struct PopoverView: View {
         }
     }
 
-    // MARK: - Cost footer
+    // MARK: - Footer
 
-    private var costFooter: some View {
+    private var footer: some View {
         HStack {
-            Text("Total cost (est.)")
+            Text(syncTooltip)
                 .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.quaternary)
+
             Spacer()
-            Text(String(format: "~$%.2f", manager.totalCost))
-                .font(.system(size: 10).monospacedDigit())
-                .foregroundStyle(.secondary)
+
+            if costTrackingEnabled && manager.totalCost > 0 {
+                Text("Total cost (est.)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                Text(String(format: "~$%.2f", manager.totalCost))
+                    .font(.system(size: 10).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
