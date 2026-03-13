@@ -1,6 +1,8 @@
 import Foundation
 
 final class UpdateChecker: ObservableObject {
+    static let shared = UpdateChecker()
+
     @Published var latestVersion: String?
     @Published var updateURL: URL?
     @Published var isChecking = false
