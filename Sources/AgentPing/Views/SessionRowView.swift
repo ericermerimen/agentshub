@@ -4,6 +4,7 @@ import AgentPingCore
 struct SessionRowView: View {
     let session: Session
     var onTap: (() -> Void)?
+    var onReviewed: (() -> Void)?
 
     @AppStorage("costTrackingEnabled") private var costTrackingEnabled = false
     @State private var now = Date()
@@ -13,7 +14,7 @@ struct SessionRowView: View {
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var isAttention: Bool {
-        session.status == .needsInput || session.status == .error
+        session.status == .needsInput || session.status == .error || session.isFreshIdle
     }
 
     var body: some View {
@@ -83,6 +84,10 @@ struct SessionRowView: View {
                 Text("Reply")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(Color(.systemOrange))
+            } else if session.isFreshIdle {
+                Text("Ready")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color(.systemTeal))
             } else if session.status == .idle {
                 Text(idleElapsed)
                     .font(.system(size: 11).monospacedDigit())
@@ -121,6 +126,7 @@ struct SessionRowView: View {
         .onTapGesture {
             hoverTask?.cancel()
             showHover = false
+            if session.isFreshIdle { onReviewed?() }
             onTap?()
         }
         .popover(isPresented: $showHover, arrowEdge: .trailing) {
@@ -137,6 +143,8 @@ struct SessionRowView: View {
                 Color(.systemOrange).opacity(isHovered ? 0.12 : 0.06)
             } else if session.status == .error {
                 Color(.systemRed).opacity(isHovered ? 0.12 : 0.06)
+            } else if session.isFreshIdle {
+                Color(.systemTeal).opacity(isHovered ? 0.12 : 0.06)
             } else {
                 Color.primary.opacity(isHovered ? 0.05 : 0)
             }
@@ -209,9 +217,9 @@ struct SessionRowView: View {
     }
 
     private var accentColor: Color {
+        if session.isFreshIdle { return Color(.systemTeal) }
         switch session.status {
         case .error: return Color(.systemRed)
-        case .idle:  return Color(.systemBlue)
         default:     return Color(.systemOrange)
         }
     }

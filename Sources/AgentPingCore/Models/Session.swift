@@ -40,6 +40,14 @@ public struct Session: Codable, Identifiable, Equatable {
     public var pinned: Bool
     public var provider: String?
     public var model: String?
+    public var reviewedAt: Date?
+
+    /// Whether this idle session hasn't been reviewed by the user yet.
+    public var isFreshIdle: Bool {
+        guard status == .idle else { return false }
+        guard let reviewed = reviewedAt else { return true }
+        return reviewed < lastEventAt
+    }
 
     public init(
         id: String,
@@ -59,7 +67,8 @@ public struct Session: Codable, Identifiable, Equatable {
         contextPercent: Double? = nil,
         pinned: Bool = false,
         provider: String? = nil,
-        model: String? = nil
+        model: String? = nil,
+        reviewedAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -79,6 +88,7 @@ public struct Session: Codable, Identifiable, Equatable {
         self.pinned = pinned
         self.provider = provider
         self.model = model
+        self.reviewedAt = reviewedAt
     }
 }
 
@@ -88,7 +98,7 @@ extension Session {
         case id, name, status, app, pid, windowId, cwd, file
         case startedAt, lastEventAt, notifications, costUsd
         case transcriptPath, taskDescription, contextPercent, pinned
-        case provider, model
+        case provider, model, reviewedAt
     }
 
     public init(from decoder: Decoder) throws {
@@ -111,6 +121,7 @@ extension Session {
         pinned = try container.decodeIfPresent(Bool.self, forKey: .pinned) ?? false
         provider = try container.decodeIfPresent(String.self, forKey: .provider)
         model = try container.decodeIfPresent(String.self, forKey: .model)
+        reviewedAt = try container.decodeIfPresent(Date.self, forKey: .reviewedAt)
     }
 }
 

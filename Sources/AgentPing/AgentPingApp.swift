@@ -97,7 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateIcon(sessions: [Session]) {
         guard let button = statusItem.button else { return }
-        let attentionCount = sessions.filter { $0.status == .needsInput || $0.status == .error }.count
+        let attentionCount = sessions.filter { $0.status == .needsInput || $0.status == .error || $0.isFreshIdle }.count
         let symbolName = attentionCount > 0 ? "circle.grid.2x2.fill" : "circle.grid.2x2"
         button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "AgentPing")
         button.title = attentionCount > 0 ? " \(attentionCount)" : ""
@@ -132,7 +132,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         previousErrorIds = currentErrors
 
-        // Notify when a previously running session completes
+        // Notify when a previously running session becomes ready (fresh idle)
+        let currentFreshIdle = Set(sessions.filter { $0.isFreshIdle }.map(\.id))
+        let newlyReady = currentFreshIdle.intersection(previousRunningIds)
+
+        for sessionId in newlyReady {
+            if let session = sessions.first(where: { $0.id == sessionId }) {
+                NotificationManager.shared.sendReady(session: session)
+            }
+        }
+
+        // Also notify when a previously running session is fully done
         let currentDone = Set(sessions.filter { $0.status == .done }.map(\.id))
         let newlyDone = currentDone.intersection(previousRunningIds)
 

@@ -104,6 +104,12 @@ public final class SessionManager: ObservableObject {
         } catch {}
     }
 
+    public func markReviewed(id: String) {
+        guard var session = sessions.first(where: { $0.id == id }) else { return }
+        session.reviewedAt = Date()
+        updateSession(session)
+    }
+
     public func togglePin(id: String) {
         guard var session = sessions.first(where: { $0.id == id }) else { return }
         session.pinned = !session.pinned

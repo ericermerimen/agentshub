@@ -76,7 +76,9 @@ Port is written to `~/.agentping/port` for discovery. CLI reads this file to fin
 - **Pin sessions** -- pinned sessions float to top
 - **Global hotkey** -- Ctrl+Option+A toggles the popover
 - **Context menu** -- right-click: jump, copy path, open transcript, open terminal, pin, mark done, delete
-- **Notifications** -- needs-input, error, done, context window warning (80%+)
+- **"Ready" state** -- teal highlight when an agent finishes and needs review, interaction-based dismissal
+- **Notifications** -- ready (agent finished), needs-input, error, done, context window warning (80%+)
+- **Auto-sync** -- stale sessions (idle >5min, no live process) auto-marked done every 60s via kill(pid, 0)
 - **Context bar** -- visual progress bar for context window usage (green/orange/red)
 - **Cost tracking** -- optional per-session and total cost display
 - **Auto-purge** -- finished sessions older than 24h removed on launch
@@ -150,6 +152,7 @@ Accepted risk: a malicious local process could forge session reports or delete s
 
 - Sandbox is disabled (required for Accessibility API / window jumping)
 - Context window size is hardcoded to 200K tokens (Claude Opus)
-- Stale session detection uses 5-minute timeout + process check
+- Stale session detection runs every 60s via kill(pid, 0) syscall, marks idle >5min sessions as done
+- "Ready" (fresh idle) state uses `reviewedAt` field for interaction-based dismissal, not time-based
 - Tests require Xcode toolchain (XCTest not available with plain swift CLI)
 - The local directory is still named `agentshub` -- only the repo and all code references are renamed to `agentping`

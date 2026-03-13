@@ -17,7 +17,7 @@ struct PopoverView: View {
     @State private var now = Date()
 
     private var attentionCount: Int {
-        manager.sessions.filter { $0.status == .needsInput || $0.status == .error }.count
+        manager.sessions.filter { $0.status == .needsInput || $0.status == .error || $0.isFreshIdle }.count
     }
 
     private var syncTooltip: String {
@@ -190,12 +190,12 @@ struct PopoverView: View {
                 if badgeCount > 0 {
                     Text("\(badgeCount)")
                         .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(tab == .active && attentionCount > 0 ? Color(.systemOrange) : Color.secondary)
+                        .foregroundStyle(tab == .active && attentionCount > 0 ? Color(.systemTeal) : Color.secondary)
                         .padding(.horizontal, 4)
                         .padding(.vertical, 1)
                         .background(
                             (tab == .active && attentionCount > 0
-                                ? Color(.systemOrange).opacity(0.15)
+                                ? Color(.systemTeal).opacity(0.15)
                                 : Color.primary.opacity(0.06)),
                             in: Capsule()
                         )
@@ -221,12 +221,17 @@ struct PopoverView: View {
         }
     }
 
+    private func sortPriority(_ session: Session) -> Int {
+        if session.isFreshIdle { return 2 } // between error(1) and running(3)
+        return session.status.sortPriority
+    }
+
     /// Group sessions by project directory, with pinned sessions first
     private func groupedActiveSessions() -> [(project: String, sessions: [Session])] {
         let sorted = manager.activeSessions.sorted { a, b in
             // Pinned first, then by status priority
             if a.pinned != b.pinned { return a.pinned }
-            return a.status.sortPriority < b.status.sortPriority
+            return sortPriority(a) < sortPriority(b)
         }
 
         let filtered = filteredSessions(sorted)
@@ -304,8 +309,12 @@ struct PopoverView: View {
 
     private func sessionRow(_ session: Session) -> some View {
         VStack(spacing: 0) {
-            SessionRowView(session: session, onTap: { jumpToWindow(session: session) })
-                .contextMenu { sessionContextMenu(session: session) }
+            SessionRowView(
+                session: session,
+                onTap: { jumpToWindow(session: session) },
+                onReviewed: { manager.markReviewed(id: session.id) }
+            )
+            .contextMenu { sessionContextMenu(session: session) }
         }
     }
 
@@ -364,6 +373,12 @@ struct PopoverView: View {
         }
 
         Divider()
+
+        if session.isFreshIdle {
+            Button("Mark as Reviewed") {
+                manager.markReviewed(id: session.id)
+            }
+        }
 
         if session.status == .running || session.status == .needsInput || session.status == .idle {
             Button("Mark as Done") {
@@ -455,10 +470,11 @@ extension SessionStatus {
         switch self {
         case .needsInput:  return 0
         case .error:       return 1
-        case .running:     return 2
-        case .idle:        return 3
-        case .done:        return 4
-        case .unavailable: return 5
+        // freshIdle = 2 (handled in PopoverView.sortPriority)
+        case .running:     return 3
+        case .idle:        return 4
+        case .done:        return 5
+        case .unavailable: return 6
         }
     }
 }

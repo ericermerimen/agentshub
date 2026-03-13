@@ -66,6 +66,24 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().add(request)
     }
 
+    func sendReady(session: Session) {
+        guard session.notifications else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Agent ready"
+        content.body = "\(session.name ?? "Session") in \(session.app?.uppercased() ?? "unknown") finished and is ready for you"
+        content.sound = .default
+        content.userInfo = ["sessionId": session.id]
+
+        let request = UNNotificationRequest(
+            identifier: "ready-\(session.id)",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request)
+    }
+
     func sendDone(session: Session) {
         guard session.notifications else { return }
 
