@@ -27,11 +27,8 @@ struct SessionRowView: View {
                     .padding(.vertical, 4)
                     .padding(.trailing, 10)
             } else {
-                // Dot for running/idle
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 6, height: 6)
-                    .padding(.trailing, 10)
+                Spacer()
+                    .frame(width: 12)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -205,7 +202,7 @@ struct SessionRowView: View {
             Text("\(Int(percent * 100))%")
                 .font(.system(size: 9).monospacedDigit())
                 .foregroundStyle(.quaternary)
-                .frame(width: 26, alignment: .trailing)
+                .frame(width: 32, alignment: .trailing)
         }
         .padding(.top, 2)
     }

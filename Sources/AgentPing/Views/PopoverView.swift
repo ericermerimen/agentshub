@@ -8,6 +8,7 @@ enum SessionTab: String, CaseIterable {
 
 struct PopoverView: View {
     @ObservedObject var manager: SessionManager
+    @ObservedObject var hookDetector: HookDetector
     var openPreferences: (() -> Void)?
     var dismissPopover: (() -> Void)?
 
@@ -34,6 +35,11 @@ struct PopoverView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+
+            if hookDetector.isSessionEndHookMissing {
+                hookWarningBanner
+            }
+
             Divider().opacity(0.5)
 
             if showSearch {
@@ -118,6 +124,31 @@ struct PopoverView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
+    }
+
+    // MARK: - Hook Warning
+
+    private var hookWarningBanner: some View {
+        Button {
+            openPreferences?()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .font(.system(size: 10))
+                Text("SessionEnd hook not configured")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text("Fix")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.orange)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 5)
+            .background(Color.orange.opacity(0.06))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Search

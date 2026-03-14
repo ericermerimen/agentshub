@@ -23,9 +23,28 @@ if [ -d "/Applications/AgentPing.app" ]; then
     rm -rf /Applications/AgentPing.app 2>/dev/null || sudo rm -rf /Applications/AgentPing.app
 fi
 
-echo "==> Installing CLI to /usr/local/bin..."
-sudo mkdir -p /usr/local/bin
-sudo ln -sf "$INSTALL_DIR/AgentPing.app/Contents/MacOS/agentping" /usr/local/bin/agentping
+# Install CLI symlink -- prefer user-local bin (no sudo), fall back to /usr/local/bin
+CLI_TARGET="$INSTALL_DIR/AgentPing.app/Contents/MacOS/agentping"
+if [ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin" 2>/dev/null; then
+    BIN_DIR="$HOME/.local/bin"
+    ln -sf "$CLI_TARGET" "$BIN_DIR/agentping"
+    echo "==> Installing CLI to $BIN_DIR..."
+    # Remove stale /usr/local/bin symlink if it points to our app
+    if [ -L "/usr/local/bin/agentping" ]; then
+        sudo rm -f /usr/local/bin/agentping 2>/dev/null || true
+    fi
+    # Check if ~/.local/bin is on PATH
+    if ! echo "$PATH" | tr ':' '\n' | grep -qx "$HOME/.local/bin"; then
+        echo ""
+        echo "NOTE: Add ~/.local/bin to your PATH if not already:"
+        echo "  echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc"
+    fi
+else
+    BIN_DIR="/usr/local/bin"
+    echo "==> Installing CLI to $BIN_DIR (requires sudo)..."
+    sudo mkdir -p "$BIN_DIR"
+    sudo ln -sf "$CLI_TARGET" "$BIN_DIR/agentping"
+fi
 
 echo ""
 echo "==> Installation complete!"

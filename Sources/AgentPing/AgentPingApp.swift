@@ -6,6 +6,7 @@ import Combine
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let manager = SessionManager()
+    let hookDetector = HookDetector()
     var statusItem: NSStatusItem!
     var popover: NSPopover!
     var preferencesWindow: NSWindow?
@@ -31,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentSize = NSSize(width: 340, height: 460)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(
-            rootView: PopoverView(manager: manager, openPreferences: { [weak self] in
+            rootView: PopoverView(manager: manager, hookDetector: hookDetector, openPreferences: { [weak self] in
                 self?.openPreferences()
             }, dismissPopover: { [weak self] in
                 self?.popover.performClose(nil)
@@ -82,8 +83,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Register global hotkey: Cmd+Shift+A
         registerGlobalHotKey()
 
-        // Initial sync + start periodic timers
+        // Initial sync + hook check + start periodic timers
         manager.sync()
+        hookDetector.check()
         startPeriodicScan()
         startPeriodicSync()
 
@@ -179,6 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         syncTimer?.invalidate()
         syncTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             self?.manager.sync()
+            self?.hookDetector.check()
         }
     }
 
@@ -199,7 +202,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         window.title = ""
         window.toolbarStyle = .preference
-        window.contentViewController = NSHostingController(rootView: PreferencesView(manager: manager))
+        window.contentViewController = NSHostingController(rootView: PreferencesView(manager: manager, hookDetector: hookDetector))
         window.center()
         window.isReleasedWhenClosed = false
         preferencesWindow = window

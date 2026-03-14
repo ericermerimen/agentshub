@@ -27,6 +27,7 @@ enum PreferencesTab: Int, CaseIterable {
 
 struct PreferencesView: View {
     @ObservedObject var manager: SessionManager
+    @ObservedObject var hookDetector: HookDetector
     @State private var selectedTab: PreferencesTab = .general
 
     var body: some View {
@@ -38,8 +39,16 @@ struct PreferencesView: View {
                         selectedTab = tab
                     } label: {
                         VStack(spacing: 3) {
-                            Image(systemName: tab.icon)
-                                .font(.system(size: 18))
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: tab.icon)
+                                    .font(.system(size: 18))
+                                if tab == .integrations && hookDetector.isSessionEndHookMissing {
+                                    Circle()
+                                        .fill(Color.orange)
+                                        .frame(width: 7, height: 7)
+                                        .offset(x: 3, y: -2)
+                                }
+                            }
                             Text(tab.title)
                                 .font(.system(size: 10))
                         }
@@ -65,12 +74,17 @@ struct PreferencesView: View {
             case .general:
                 GeneralTab()
             case .integrations:
-                IntegrationsTab()
+                IntegrationsTab(hookDetector: hookDetector)
             case .about:
                 AboutTab(manager: manager)
             }
         }
         .frame(width: 400, height: 540)
+        .onAppear {
+            if hookDetector.isSessionEndHookMissing {
+                selectedTab = .integrations
+            }
+        }
     }
 }
 
@@ -124,10 +138,29 @@ private struct GeneralTab: View {
 // MARK: - Integrations Tab
 
 private struct IntegrationsTab: View {
+    @ObservedObject var hookDetector: HookDetector
     @AppStorage("apiPort") private var apiPort = 19199
 
     var body: some View {
         Form {
+            if hookDetector.isSessionEndHookMissing {
+                Section {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                            .font(.system(size: 14))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("SessionEnd hook not configured")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                            Text("Copy the hook config below and paste into ~/.claude/settings.json to enable instant session close detection.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
             Section("API Server") {
                 HStack {
                     Text("Port")
@@ -162,7 +195,9 @@ private struct IntegrationsTab: View {
   "hooks": {
     "PostToolUse": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event tool-use'"}],
     "Stop": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event stopped'"}],
-    "Notification": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event needs-input'"}]
+    "SubagentStop": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event tool-use'"}],
+    "Notification": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event needs-input'"}],
+    "SessionEnd": [{"command": "bash -c 'agentping report --session $(jq -r .session_id) --event session-end'"}]
   }
 }
 """

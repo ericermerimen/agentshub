@@ -15,6 +15,7 @@ public enum SessionStatus: String, Codable, CaseIterable {
         case "tool-use":    return .running
         case "needs-input": return .needsInput
         case "stopped":     return current == .needsInput ? .needsInput : .idle
+        case "session-end": return .done
         case "error":       return .error
         default:            return .running
         }

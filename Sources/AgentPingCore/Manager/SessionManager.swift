@@ -37,42 +37,10 @@ public final class SessionManager: ObservableObject {
         }
     }
 
-    /// Sync: re-read all session files, then validate each active session is still alive, mark stale ones as done.
+    /// Sync: re-read all session files from disk.
+    /// Sessions move to History only via explicit SessionEnd hook event or manual "Mark as Done".
     public func sync() {
         reload()
-
-        do {
-            var allSessions = sessions
-            var changed = false
-
-            for i in allSessions.indices {
-                let s = allSessions[i]
-                guard [.running, .needsInput, .idle].contains(s.status) else { continue }
-
-                let staleness = Date().timeIntervalSince(s.lastEventAt)
-
-                if staleness > 300 { // 5 minutes with no event
-                    let hasProcess = s.pid.map { Self.isProcessAlive($0) } ?? false
-
-                    if !hasProcess {
-                        allSessions[i].status = .done
-                        try? store.write(allSessions[i])
-                        changed = true
-                    }
-                }
-            }
-
-            if changed {
-                sessions = allSessions.sorted { $0.lastEventAt > $1.lastEventAt }
-            }
-        } catch {}
-    }
-
-    /// Check if a process is still alive using kill(pid, 0) syscall.
-    /// This is ~1000x cheaper than spawning a `ps` subprocess.
-    private static func isProcessAlive(_ pid: Int) -> Bool {
-        guard pid > 0 else { return false }
-        return Darwin.kill(Int32(pid), 0) == 0
     }
 
     public func clearUnavailable() {
