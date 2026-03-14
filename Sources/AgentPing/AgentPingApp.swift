@@ -33,6 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(
             rootView: PopoverView(manager: manager, openPreferences: { [weak self] in
                 self?.openPreferences()
+            }, dismissPopover: { [weak self] in
+                self?.popover.performClose(nil)
             })
         )
 
@@ -45,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Set up notifications
         NotificationManager.shared.setup { [weak self] sessionId in
             guard let session = self?.manager.sessions.first(where: { $0.id == sessionId }) else { return }
+            self?.popover.performClose(nil)
             let jumper = WindowJumper()
             _ = jumper.jumpTo(session: session)
         }
@@ -174,7 +177,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startPeriodicSync() {
         syncTimer?.invalidate()
-        syncTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+        syncTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             self?.manager.sync()
         }
     }

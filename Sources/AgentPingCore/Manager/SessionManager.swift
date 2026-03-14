@@ -31,15 +31,18 @@ public final class SessionManager: ObservableObject {
         do {
             sessions = try store.listAll()
                 .sorted { $0.lastEventAt > $1.lastEventAt }
+            lastSyncAt = Date()
         } catch {
             sessions = []
         }
     }
 
-    /// Sync: validate each active session is still alive, mark stale ones as done.
+    /// Sync: re-read all session files, then validate each active session is still alive, mark stale ones as done.
     public func sync() {
+        reload()
+
         do {
-            var allSessions = try store.listAll()
+            var allSessions = sessions
             var changed = false
 
             for i in allSessions.indices {
@@ -62,10 +65,7 @@ public final class SessionManager: ObservableObject {
             if changed {
                 sessions = allSessions.sorted { $0.lastEventAt > $1.lastEventAt }
             }
-            lastSyncAt = Date()
-        } catch {
-            sessions = []
-        }
+        } catch {}
     }
 
     /// Check if a process is still alive using kill(pid, 0) syscall.

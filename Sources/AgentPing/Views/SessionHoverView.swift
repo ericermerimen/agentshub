@@ -9,11 +9,18 @@ struct SessionHoverView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Provider + Model
+            // Name + Status
             HStack(spacing: 6) {
-                Text(modelLabel)
+                Text(session.name ?? "Unnamed")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                if let model = modelLabel {
+                    Text(model)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.tertiary)
+                }
 
                 Spacer()
 
@@ -128,9 +135,10 @@ struct SessionHoverView: View {
         .onReceive(timer) { now = $0 }
     }
 
-    private var modelLabel: String {
+    private var modelLabel: String? {
         let parts = [session.provider, session.model].compactMap { $0 }
-        return parts.isEmpty ? "Unknown model" : parts.joined(separator: " ")
+            .filter { !$0.hasPrefix("<") && $0 != "Unknown" }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     private var statusLabel: String {

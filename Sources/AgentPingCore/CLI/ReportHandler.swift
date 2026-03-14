@@ -30,7 +30,8 @@ public final class ReportHandler {
             session.contextPercent = Self.readContextPercent(transcriptPath: transcriptPath)
             // Extract provider and model from transcript
             if session.provider == nil || session.model == nil,
-               let modelId = Self.readModelFromTranscript(transcriptPath) {
+               let modelId = Self.readModelFromTranscript(transcriptPath),
+               !modelId.hasPrefix("<") {
                 let (provider, model) = Self.humanizeModelName(modelId)
                 session.provider = provider
                 session.model = model

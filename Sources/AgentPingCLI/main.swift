@@ -89,6 +89,25 @@ struct Report: ParsableCommand {
         }
     }
 
+    /// Walk up the process tree to find the Claude Code (node) process PID.
+    /// Hook execution chain: claude (node) → shell → agentping report
+    private static func detectClaudePid() -> Int {
+        var pid = Int(getppid()) // parent of this process (shell)
+        for _ in 0..<5 {
+            var info = kinfo_proc()
+            var size = MemoryLayout<kinfo_proc>.size
+            var mib = [CTL_KERN, KERN_PROC, KERN_PROC_PID, Int32(pid)]
+            guard sysctl(&mib, 4, &info, &size, nil, 0) == 0 else { break }
+            let ppid = Int(info.kp_eproc.e_ppid)
+            if ppid <= 1 { break }
+            // Return the first ancestor that looks like a long-running process
+            // (the shell's parent, which is the Claude Code node process)
+            pid = ppid
+            break
+        }
+        return pid
+    }
+
     private func readStdinPayload() -> StdinPayload? {
         let data = FileHandle.standardInput.availableData
         guard !data.isEmpty else {
@@ -113,6 +132,8 @@ struct Report: ParsableCommand {
         if let cwd = stdin?.cwd { payload["cwd"] = cwd }
         if let transcriptPath = stdin?.transcript_path { payload["transcript_path"] = transcriptPath }
         if let app = Self.detectApp() { payload["app"] = app }
+        // Auto-detect the Claude Code process PID (grandparent of this hook process)
+        payload["pid"] = Self.detectClaudePid()
 
         // Try HTTP API first
         if APIClient.report(payload) {

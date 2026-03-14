@@ -100,7 +100,8 @@ public final class APIRouter {
                 session.contextPercent = ReportHandler.readContextPercent(transcriptPath: transcriptPath)
                 // Auto-extract provider/model from Claude transcripts
                 if session.provider == nil, session.model == nil,
-                   let modelId = ReportHandler.readModelFromTranscript(transcriptPath) {
+                   let modelId = ReportHandler.readModelFromTranscript(transcriptPath),
+                   !modelId.hasPrefix("<") {
                     let (provider, model) = ReportHandler.humanizeModelName(modelId)
                     session.provider = provider
                     session.model = model

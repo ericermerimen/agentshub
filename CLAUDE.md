@@ -54,7 +54,10 @@ Sources/
 4. `DirectoryWatcher` detects the file change via FSEvents
 5. `SessionManager.reload()` reads all session files
 6. The SwiftUI popover updates reactively via `@ObservedObject`
-7. Clicking a session uses `WindowJumper` (Accessibility API) to focus the right terminal window
+7. Clicking a session dismisses the popover and uses `WindowJumper` to focus the right window:
+   - Editors (VSCode, Cursor, etc.): activates app, then cycles windows via `osascript` + Cmd+` keystroke
+   - Ghostty: activates app, raises window via AX, attempts tab switching via AppleScript
+   - Other terminals: activates app, raises window via AX title matching
 
 ### HTTP API (v0.6.0+)
 
@@ -151,6 +154,8 @@ Accepted risk: a malicious local process could forge session reports or delete s
 ## Known issues / notes
 
 - Sandbox is disabled (required for Accessibility API / window jumping)
+- Window jumping for multi-window editors uses `osascript` + System Events (Cmd+` cycling), not AX API directly, because AX permissions (`-25211`) get invalidated on every app rebuild with ad-hoc signing
+- After rebuilding from source, users must re-grant Accessibility permission in System Settings > Privacy & Security > Accessibility (remove and re-add AgentPing)
 - Context window size is hardcoded to 200K tokens (Claude Opus)
 - Stale session detection runs every 60s via kill(pid, 0) syscall, marks idle >5min sessions as done
 - "Ready" (fresh idle) state uses `reviewedAt` field for interaction-based dismissal, not time-based

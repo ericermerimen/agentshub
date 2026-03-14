@@ -9,6 +9,7 @@ enum SessionTab: String, CaseIterable {
 struct PopoverView: View {
     @ObservedObject var manager: SessionManager
     var openPreferences: (() -> Void)?
+    var dismissPopover: (() -> Void)?
 
     @AppStorage("costTrackingEnabled") private var costTrackingEnabled = false
     @State private var selectedTab: SessionTab = .active
@@ -443,8 +444,11 @@ struct PopoverView: View {
     // MARK: - Actions
 
     private func jumpToWindow(session: Session) {
-        let jumper = WindowJumper()
-        _ = jumper.jumpTo(session: session)
+        dismissPopover?()
+        DispatchQueue.global(qos: .userInteractive).async {
+            let jumper = WindowJumper()
+            _ = jumper.jumpTo(session: session)
+        }
     }
 
     private func openTerminal(at path: String) {
