@@ -37,10 +37,34 @@ public final class SessionManager: ObservableObject {
         }
     }
 
-    /// Sync: re-read all session files from disk.
-    /// Sessions move to History only via explicit SessionEnd hook event or manual "Mark as Done".
+    /// Sync: re-read all session files from disk, then check for dead processes.
+    /// Active sessions whose PID is no longer alive are marked as done.
     public func sync() {
         reload()
+        markDeadProcessSessions()
+    }
+
+    /// Check active sessions for dead processes via kill(pid, 0).
+    /// If the process is gone, mark the session as done so it moves to History.
+    private func markDeadProcessSessions() {
+        var changed = false
+        for session in sessions {
+            guard [.running, .needsInput, .idle].contains(session.status) else { continue }
+            guard let pid = session.pid, pid > 0 else { continue }
+
+            let alive = kill(Int32(pid), 0) == 0 || errno == EPERM
+            if !alive {
+                var updated = session
+                updated.status = .done
+                do {
+                    try store.write(updated)
+                    changed = true
+                } catch {}
+            }
+        }
+        if changed {
+            reload()
+        }
     }
 
     public func clearUnavailable() {
