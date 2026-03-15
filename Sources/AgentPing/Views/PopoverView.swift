@@ -71,12 +71,6 @@ struct PopoverView: View {
 
             Spacer()
 
-            if manager.activeSessions.count > 0 {
-                Text("\(manager.activeSessions.count) active")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.tertiary)
-            }
-
             Button {
                 withAnimation(.easeInOut(duration: 0.15)) {
                     showSearch.toggle()
